@@ -1,0 +1,12 @@
+Library
+Logs
+Temp
+obj
+UserSettings
+*.csproj
+.idea
+Inventory.sln.DotSettings.user
+Build
+.utmp
+inf
+Recordings
