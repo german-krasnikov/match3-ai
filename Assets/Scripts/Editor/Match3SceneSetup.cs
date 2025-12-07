@@ -60,6 +60,57 @@ namespace Match3.Editor
             Debug.Log("[Match3] Data assets created!");
         }
 
+        [MenuItem("Match3/Add Spawn System", false, 10)]
+        public static void AddSpawnSystem()
+        {
+            var gridView = Object.FindFirstObjectByType<GridView>();
+            if (gridView == null)
+            {
+                Debug.LogError("[Match3] GridView not found. Run 'Setup Scene' first.");
+                return;
+            }
+
+            var factory = Object.FindFirstObjectByType<ElementFactory>();
+            if (factory == null)
+            {
+                Debug.LogError("[Match3] ElementFactory not found. Run 'Setup Scene' first.");
+                return;
+            }
+
+            // Check if already exists
+            var existingSpawn = Object.FindFirstObjectByType<SpawnController>();
+            if (existingSpawn != null)
+            {
+                Debug.LogWarning("[Match3] SpawnController already exists.");
+                return;
+            }
+
+            // Create SpawnController
+            var spawnGO = new GameObject("SpawnController");
+            var spawnController = spawnGO.AddComponent<SpawnController>();
+
+            var spawnSO = new SerializedObject(spawnController);
+            spawnSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            spawnSO.FindProperty("_factory").objectReferenceValue = factory;
+            spawnSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // Create GameBootstrap
+            var existingBootstrap = Object.FindFirstObjectByType<GameBootstrap>();
+            if (existingBootstrap == null)
+            {
+                var bootstrapGO = new GameObject("GameBootstrap");
+                var bootstrap = bootstrapGO.AddComponent<GameBootstrap>();
+
+                var bootstrapSO = new SerializedObject(bootstrap);
+                bootstrapSO.FindProperty("_gridView").objectReferenceValue = gridView;
+                bootstrapSO.FindProperty("_spawnController").objectReferenceValue = spawnController;
+                bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            Selection.activeGameObject = spawnGO;
+            Debug.Log("[Match3] Spawn System added!");
+        }
+
         private static void CreateDirectories()
         {
             if (!AssetDatabase.IsValidFolder("Assets/Data"))
