@@ -19,6 +19,7 @@ namespace Match3.Core
         public static GridPosition operator -(GridPosition a, GridPosition b)
             => new GridPosition(a.X - b.X, a.Y - b.Y);
 
+        public static readonly GridPosition Zero = new GridPosition(0, 0);
         public static readonly GridPosition Up = new GridPosition(0, 1);
         public static readonly GridPosition Down = new GridPosition(0, -1);
         public static readonly GridPosition Left = new GridPosition(-1, 0);

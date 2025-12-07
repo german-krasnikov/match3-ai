@@ -45,6 +45,8 @@ namespace Match3.Swap
         {
             if (_isSwapping) return;
 
+            if (!_validator.AreNeighbors(a, b)) return;
+
             var elementA = _grid.GetElement(a);
             var elementB = _grid.GetElement(b);
             if (elementA == null || elementB == null) return;
@@ -52,7 +54,9 @@ namespace Match3.Swap
             _isSwapping = true;
             _inputHandler.SetEnabled(false);
 
-            if (_validator.IsValidSwap(a, b))
+            bool isValid = _validator.WouldCreateMatch(a, b);
+
+            if (isValid)
                 ExecuteValidSwap(a, b, elementA, elementB);
             else
                 ExecuteInvalidSwap(elementA, elementB);

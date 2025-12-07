@@ -25,10 +25,14 @@ namespace Match3.Game
 
             _spawnController.Initialize(_gridData);
             _matchController.Initialize(_gridData);
-            _swapController.Initialize(_gridData);
 
             _spawnController.OnFillComplete += OnGridFilled;
-            _swapController.OnSwapComplete += OnSwapComplete;
+
+            if (_swapController != null)
+            {
+                _swapController.Initialize(_gridData);
+                _swapController.OnSwapComplete += OnSwapComplete;
+            }
 
             _spawnController.FillGrid();
         }

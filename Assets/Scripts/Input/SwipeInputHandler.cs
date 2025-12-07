@@ -84,12 +84,19 @@ namespace Match3.Input
 
             _isSwiping = false;
 
-            if (elapsed > _config.MaxSwipeTime) return;
-            if (distance < _config.MinSwipeDistance) return;
+            if (elapsed > _config.MaxSwipeTime)
+            {
+                Debug.Log($"[Input] Swipe too slow: {elapsed:F2}s > {_config.MaxSwipeTime}s");
+                return;
+            }
+            if (distance < _config.MinSwipeDistance)
+            {
+                Debug.Log($"[Input] Swipe too short: {distance:F0}px < {_config.MinSwipeDistance}px");
+                return;
+            }
 
             var direction = GetSwipeDirection(delta);
-            if (direction == GridPosition.Zero) return;
-
+            Debug.Log($"[Input] Swipe from {_startGridPos} dir={direction}");
             OnSwipeDetected?.Invoke(_startGridPos, direction);
         }
 
