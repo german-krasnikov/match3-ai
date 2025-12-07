@@ -33,7 +33,8 @@ namespace Match3.Editor
         public static void SetupScene()
         {
             CreateDirectories();
-            var elementTypes = CreateElementTypes();
+            var sprite = CreateDefaultSprite();
+            var elementTypes = CreateElementTypes(sprite);
             var gridConfig = CreateGridConfig(elementTypes);
             var elementPrefab = CreateElementPrefab();
             var cellPrefab = CreateCellPrefab();
@@ -49,7 +50,8 @@ namespace Match3.Editor
         public static void CreateDataOnly()
         {
             CreateDirectories();
-            var elementTypes = CreateElementTypes();
+            var sprite = CreateDefaultSprite();
+            var elementTypes = CreateElementTypes(sprite);
             CreateGridConfig(elementTypes);
             CreateElementPrefab();
             CreateCellPrefab();
@@ -58,6 +60,16 @@ namespace Match3.Editor
             AssetDatabase.Refresh();
 
             Debug.Log("[Match3] Data assets created!");
+        }
+
+        [MenuItem("Match3/Fix Element Sprites", false, 3)]
+        public static void FixElementSprites()
+        {
+            CreateDirectories();
+            var sprite = CreateDefaultSprite();
+            CreateElementTypes(sprite);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Match3] Element sprites fixed!");
         }
 
         [MenuItem("Match3/Add Spawn System", false, 10)]
@@ -123,7 +135,7 @@ namespace Match3.Editor
                 AssetDatabase.CreateFolder("Assets", "Prefabs");
         }
 
-        private static ElementType[] CreateElementTypes()
+        private static ElementType[] CreateElementTypes(Sprite sprite)
         {
             var types = new ElementType[5];
 
@@ -134,15 +146,22 @@ namespace Match3.Editor
                 var existing = AssetDatabase.LoadAssetAtPath<ElementType>(path);
                 if (existing != null)
                 {
+                    // Update sprite if missing
+                    var existingSO = new SerializedObject(existing);
+                    if (existingSO.FindProperty("_sprite").objectReferenceValue == null)
+                    {
+                        existingSO.FindProperty("_sprite").objectReferenceValue = sprite;
+                        existingSO.ApplyModifiedPropertiesWithoutUndo();
+                    }
                     types[i] = existing;
                     continue;
                 }
 
                 var elementType = ScriptableObject.CreateInstance<ElementType>();
 
-                // Set private fields via SerializedObject
                 var so = new SerializedObject(elementType);
                 so.FindProperty("_id").stringValue = ElementNames[i].ToLower();
+                so.FindProperty("_sprite").objectReferenceValue = sprite;
                 so.FindProperty("_color").colorValue = ElementColors[i];
                 so.ApplyModifiedPropertiesWithoutUndo();
 
