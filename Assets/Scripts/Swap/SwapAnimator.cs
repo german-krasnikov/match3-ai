@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using Match3.Core;
 using Match3.Data;
 using Match3.Elements;
 using Match3.Grid;
@@ -14,17 +15,17 @@ namespace Match3.Swap
 
         private Sequence _currentSequence;
 
-        public void AnimateSwap(IElement elementA, IElement elementB, Action onComplete)
+        public void AnimateSwap(IElement elementA, IElement elementB, GridPosition targetA, GridPosition targetB, Action onComplete)
         {
             KillCurrent();
 
-            var posA = _gridView.PositionConverter.GridToWorld(elementA.Position);
-            var posB = _gridView.PositionConverter.GridToWorld(elementB.Position);
+            var worldA = _gridView.PositionConverter.GridToWorld(targetA);
+            var worldB = _gridView.PositionConverter.GridToWorld(targetB);
             var duration = _config.SwapDuration;
 
             _currentSequence = DOTween.Sequence();
-            _currentSequence.Append(elementA.Transform.DOMove(posB, duration).SetEase(Ease.OutQuad));
-            _currentSequence.Join(elementB.Transform.DOMove(posA, duration).SetEase(Ease.OutQuad));
+            _currentSequence.Append(elementA.Transform.DOMove(worldA, duration).SetEase(Ease.OutQuad));
+            _currentSequence.Join(elementB.Transform.DOMove(worldB, duration).SetEase(Ease.OutQuad));
             _currentSequence.OnComplete(() => onComplete?.Invoke());
         }
 

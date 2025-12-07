@@ -68,7 +68,7 @@ namespace Match3.Swap
             elementA.Position = b;
             elementB.Position = a;
 
-            _animator.AnimateSwap(elementA, elementB, () =>
+            _animator.AnimateSwap(elementA, elementB, b, a, () =>
             {
                 _isSwapping = false;
                 OnSwapComplete?.Invoke(a, b);
