@@ -1,25 +1,28 @@
-# Phase 4: Spawn System — Детальный План Реализации
+# Phase 4: Spawn System — Реализация
+
+## Статус: ГОТОВО
 
 ## Обзор
 
-Система спауна элементов. Ключевая задача — заполнение сетки БЕЗ начальных матчей (3+ в ряд).
+Система спауна элементов. Заполнение сетки БЕЗ начальных матчей (3+ в ряд).
 
 ```
-Assets/Scripts/Spawn/
-├── ISpawnStrategy.cs        # Интерфейс стратегии (~15 строк)
-├── NoMatchSpawnStrategy.cs  # Спаун без матчей (~80 строк)
-└── SpawnController.cs       # MonoBehaviour контроллер (~90 строк)
+Assets/Scripts/
+├── Spawn/
+│   ├── ISpawnStrategy.cs        # Интерфейс стратегии
+│   ├── NoMatchSpawnStrategy.cs  # Спаун без матчей
+│   └── SpawnController.cs       # MonoBehaviour контроллер
+└── Game/
+    └── GameBootstrap.cs         # Entry point
 ```
 
 **Зависимости:** GridData, GridConfig, ElementFactory, GridPositionConverter
 
 ---
 
-## 4.1 ISpawnStrategy (Interface)
+## Реализованные файлы
 
-**Файл:** `Assets/Scripts/Spawn/ISpawnStrategy.cs`
-
-Контракт для стратегий выбора типа элемента. Позволяет легко подменять логику (тесты, разные режимы игры).
+### 4.1 ISpawnStrategy.cs
 
 ```csharp
 using Match3.Core;
@@ -30,51 +33,21 @@ namespace Match3.Spawn
 {
     public interface ISpawnStrategy
     {
-        /// <summary>
-        /// Выбирает тип элемента для указанной позиции.
-        /// </summary>
-        /// <param name="position">Позиция на сетке</param>
-        /// <param name="grid">Текущее состояние сетки</param>
-        /// <param name="config">Конфиг с доступными типами</param>
-        /// <returns>Выбранный тип элемента</returns>
         ElementType GetElementType(GridPosition position, GridData grid, GridConfig config);
     }
 }
 ```
 
+**Назначение:** Контракт для стратегий выбора типа элемента.
+
 **Почему интерфейс:**
-- Тестирование: можно создать детерминированную стратегию для тестов
-- Расширяемость: weighted spawn, level-specific spawn, tutorial spawn
+- Тестирование: детерминированная стратегия для тестов
+- Расширяемость: weighted spawn, tutorial spawn
 - DIP: SpawnController зависит от абстракции
 
 ---
 
-## 4.2 NoMatchSpawnStrategy (Pure C# Class)
-
-**Файл:** `Assets/Scripts/Spawn/NoMatchSpawnStrategy.cs`
-
-Выбирает случайный тип, гарантируя отсутствие матча при размещении.
-
-### Алгоритм
-
-При заполнении сетки снизу-вверх, слева-направо:
-1. Получить список всех доступных типов
-2. Отфильтровать типы, которые создадут матч (проверка 2 слева + 2 снизу)
-3. Выбрать случайный из оставшихся
-
-```
-Проверка для позиции (x, y):
-
-Горизонталь:         Вертикаль:
-[?][?][NEW]          [NEW]
-                     [?]
-                     [?]
-
-Если (x-1) и (x-2) того же типа → исключить
-Если (y-1) и (y-2) того же типа → исключить
-```
-
-### Реализация
+### 4.2 NoMatchSpawnStrategy.cs
 
 ```csharp
 using System.Collections.Generic;
@@ -101,7 +74,6 @@ namespace Match3.Spawn
                 }
             }
 
-            // Fallback: если все типы создают матч (редкий edge case) — берём случайный
             if (_availableTypes.Count == 0)
             {
                 return config.ElementTypes[Random.Range(0, config.ElementTypes.Count)];
@@ -112,71 +84,58 @@ namespace Match3.Spawn
 
         private bool WouldCreateMatch(GridPosition pos, ElementType type, GridData grid)
         {
-            return CheckHorizontalMatch(pos, type, grid) ||
-                   CheckVerticalMatch(pos, type, grid);
+            return CheckHorizontalMatch(pos, type, grid) || CheckVerticalMatch(pos, type, grid);
         }
 
         private bool CheckHorizontalMatch(GridPosition pos, ElementType type, GridData grid)
         {
-            // Проверяем 2 элемента слева
             var left1 = grid.GetElement(pos + GridPosition.Left);
             var left2 = grid.GetElement(pos + GridPosition.Left + GridPosition.Left);
 
-            return left1 != null && left2 != null &&
-                   left1.Type == type && left2.Type == type;
+            return left1 != null && left2 != null && left1.Type == type && left2.Type == type;
         }
 
         private bool CheckVerticalMatch(GridPosition pos, ElementType type, GridData grid)
         {
-            // Проверяем 2 элемента снизу
             var down1 = grid.GetElement(pos + GridPosition.Down);
             var down2 = grid.GetElement(pos + GridPosition.Down + GridPosition.Down);
 
-            return down1 != null && down2 != null &&
-                   down1.Type == type && down2.Type == type;
+            return down1 != null && down2 != null && down1.Type == type && down2.Type == type;
         }
     }
 }
+```
+
+### Алгоритм
+
+При заполнении сетки снизу-вверх, слева-направо:
+1. Получить список всех доступных типов
+2. Отфильтровать типы, которые создадут матч (проверка 2 слева + 2 снизу)
+3. Выбрать случайный из оставшихся
+
+```
+Проверка для позиции (x, y):
+
+Горизонталь:         Вертикаль:
+[?][?][NEW]          [NEW]
+                     [?]
+                     [?]
+
+Если (x-1) и (x-2) того же типа → исключить
+Если (y-1) и (y-2) того же типа → исключить
 ```
 
 ### Edge Cases
 
 | Ситуация | Решение |
 |----------|---------|
-| Позиция (0, y) или (1, y) | Нет 2 элементов слева → горизонталь не проверяется |
-| Позиция (x, 0) или (x, 1) | Нет 2 элементов снизу → вертикаль не проверяется |
-| Все типы создают матч | Fallback на случайный (теоретически при 5 типах невозможно) |
+| Позиция (0, y) или (1, y) | GetElement вернёт null → проверка пройдёт |
+| Позиция (x, 0) или (x, 1) | GetElement вернёт null → проверка пройдёт |
+| Все типы создают матч | Fallback на случайный (при 5 типах невозможно) |
 
 ---
 
-## 4.3 SpawnController (MonoBehaviour)
-
-**Файл:** `Assets/Scripts/Spawn/SpawnController.cs`
-
-Контроллер спауна. Связывает стратегию, фабрику и сетку.
-
-### Inspector поля
-
-```csharp
-[SerializeField] private GridView _gridView;           // Для конфига и конвертера
-[SerializeField] private ElementFactory _factory;      // Создание элементов
-```
-
-### API
-
-```csharp
-// События
-event Action OnFillComplete;              // Начальное заполнение завершено
-event Action<int> OnSpawnedInColumn;      // Заспаунен элемент в колонке (для анимации)
-
-// Методы
-void Initialize(GridData grid);           // Инициализация с данными сетки
-void FillGrid();                          // Начальное заполнение (без анимации)
-IElement SpawnAtTop(int column);          // Спаун сверху колонки (для Gravity)
-void SetStrategy(ISpawnStrategy strategy); // Смена стратегии (опционально)
-```
-
-### Реализация
+### 4.3 SpawnController.cs
 
 ```csharp
 using System;
@@ -214,10 +173,6 @@ namespace Match3.Spawn
             _strategy = strategy ?? new NoMatchSpawnStrategy();
         }
 
-        /// <summary>
-        /// Заполняет всю сетку элементами. Без анимации — мгновенно.
-        /// Заполнение идёт снизу-вверх, слева-направо для корректной работы NoMatchSpawnStrategy.
-        /// </summary>
         public void FillGrid()
         {
             for (int y = 0; y < _config.Height; y++)
@@ -225,9 +180,7 @@ namespace Match3.Spawn
                 for (int x = 0; x < _config.Width; x++)
                 {
                     var pos = new GridPosition(x, y);
-
                     if (_grid.GetElement(pos) != null) continue;
-
                     SpawnElement(pos);
                 }
             }
@@ -235,19 +188,9 @@ namespace Match3.Spawn
             OnFillComplete?.Invoke();
         }
 
-        /// <summary>
-        /// Спаунит элемент сверху колонки. Используется GravityController.
-        /// Элемент создаётся выше видимой области для анимации падения.
-        /// </summary>
-        /// <param name="column">Индекс колонки (0 to Width-1)</param>
-        /// <param name="offsetAboveGrid">На сколько ячеек выше сетки создать</param>
-        /// <returns>Созданный элемент</returns>
         public IElement SpawnAtTop(int column, int offsetAboveGrid = 1)
         {
-            // Позиция в сетке — верхняя ячейка колонки
             var gridPos = new GridPosition(column, _config.Height - 1);
-
-            // World позиция — выше сетки для анимации падения
             var spawnWorldPos = _converter.GridToWorld(
                 new GridPosition(column, _config.Height - 1 + offsetAboveGrid)
             );
@@ -256,7 +199,6 @@ namespace Match3.Spawn
             var element = _factory.CreateElement(type, gridPos, spawnWorldPos);
 
             OnSpawnedInColumn?.Invoke(column);
-
             return element;
         }
 
@@ -271,166 +213,53 @@ namespace Match3.Spawn
 }
 ```
 
----
-
-## Интеграция с существующим кодом
-
-### Что нужно от Phase 1-3:
-
-| Компонент | Используется для |
-|-----------|-----------------|
-| `GridPosition` | Координаты, направления (Left, Down) |
-| `GridData` | Хранение элементов, GetElement, SetElement |
-| `GridConfig` | ElementTypes[], Width, Height |
-| `GridPositionConverter` | GridToWorld для позиционирования |
-| `ElementFactory` | CreateElement(type, pos, worldPos) |
-| `GridView` | Доступ к Config и PositionConverter |
-
-### Что предоставляет для Phase 5+:
-
-| Компонент | Предоставляет |
-|-----------|--------------|
-| `SpawnController.FillGrid()` | Начальное заполнение без матчей |
-| `SpawnController.SpawnAtTop()` | Создание элементов для GravityController |
-| `ISpawnStrategy` | Точка расширения для weighted spawn |
-
----
-
-## Scene Setup
-
-### Иерархия объектов (дополнение):
-
-```
-Scene
-├── Grid                    [GridView]
-├── ElementPool             [ElementPool]
-├── Elements                (parent)
-├── ElementFactory          [ElementFactory]
-└── SpawnController         [SpawnController]  ← NEW
-```
-
-### Настройка SpawnController:
-
-1. Создать пустой GameObject "SpawnController"
-2. Добавить компонент `SpawnController`
-3. В Inspector назначить:
-   - `_gridView` → Grid объект
-   - `_factory` → ElementFactory объект
-
----
-
-## Пример использования
-
-### GameBootstrap (обновлённый):
+### API
 
 ```csharp
-public class GameBootstrap : MonoBehaviour
-{
-    [SerializeField] private GridView _gridView;
-    [SerializeField] private SpawnController _spawnController;
+// События
+event Action OnFillComplete;              // Начальное заполнение завершено
+event Action<int> OnSpawnedInColumn;      // Заспаунен элемент в колонке
 
-    private GridData _gridData;
-
-    void Start()
-    {
-        // 1. Создать данные сетки
-        var config = _gridView.Config;
-        _gridData = new GridData(config.Width, config.Height);
-
-        // 2. Создать визуальную сетку (фон)
-        _gridView.CreateVisualGrid();
-
-        // 3. Инициализировать спаун
-        _spawnController.Initialize(_gridData);
-        _spawnController.OnFillComplete += OnGridFilled;
-
-        // 4. Заполнить сетку элементами
-        _spawnController.FillGrid();
-    }
-
-    private void OnGridFilled()
-    {
-        Debug.Log("Grid filled without initial matches!");
-        // Здесь можно запустить игровой цикл
-    }
-}
-```
-
-### Будущее использование в GravityController:
-
-```csharp
-// После падения элементов — спаун новых сверху
-foreach (int column in columnsWithEmptyTop)
-{
-    var newElement = _spawnController.SpawnAtTop(column, offsetAboveGrid: emptyCount);
-    // newElement уже создан выше сетки, анимируем падение...
-}
+// Методы
+void Initialize(GridData grid);           // Инициализация с данными сетки
+void FillGrid();                          // Начальное заполнение (без анимации)
+IElement SpawnAtTop(int column, int offset); // Спаун сверху колонки (для Gravity)
+void SetStrategy(ISpawnStrategy strategy); // Смена стратегии
 ```
 
 ---
 
-## Тестирование
-
-### Unit-тесты для NoMatchSpawnStrategy:
+### 4.4 GameBootstrap.cs
 
 ```csharp
-[Test]
-public void GetElementType_WithTwoSameLeft_ExcludesThatType()
+using Match3.Grid;
+using Match3.Spawn;
+using UnityEngine;
+
+namespace Match3.Game
 {
-    // Arrange
-    var grid = new GridData(8, 8);
-    var redType = CreateElementType("red");
-
-    // Размещаем 2 красных слева от (2, 0)
-    grid.SetElement(new GridPosition(0, 0), CreateMockElement(redType));
-    grid.SetElement(new GridPosition(1, 0), CreateMockElement(redType));
-
-    var strategy = new NoMatchSpawnStrategy();
-    var config = CreateConfig(redType, blueType, greenType);
-
-    // Act — вызываем много раз
-    for (int i = 0; i < 100; i++)
+    public class GameBootstrap : MonoBehaviour
     {
-        var result = strategy.GetElementType(new GridPosition(2, 0), grid, config);
+        [SerializeField] private GridView _gridView;
+        [SerializeField] private SpawnController _spawnController;
 
-        // Assert — никогда не должен вернуть красный
-        Assert.AreNotEqual(redType, result);
-    }
-}
+        private GridData _gridData;
 
-[Test]
-public void GetElementType_WithTwoSameBelow_ExcludesThatType()
-{
-    // Аналогично для вертикали
-}
-
-[Test]
-public void GetElementType_AtCorner_WorksWithoutErrors()
-{
-    // Проверка edge case: позиция (0, 0) — нет соседей слева и снизу
-}
-```
-
-### Integration-тест:
-
-```csharp
-[Test]
-public void FillGrid_ProducesNoInitialMatches()
-{
-    // Arrange
-    var grid = new GridData(8, 8);
-    var spawnController = CreateSpawnController(grid);
-
-    // Act
-    spawnController.FillGrid();
-
-    // Assert — проверяем все позиции
-    for (int x = 0; x < 8; x++)
-    {
-        for (int y = 0; y < 8; y++)
+        private void Start()
         {
-            var pos = new GridPosition(x, y);
-            Assert.IsFalse(HasMatchAt(grid, pos), $"Match found at {pos}");
+            var config = _gridView.Config;
+            _gridData = new GridData(config.Width, config.Height);
+
+            _gridView.CreateVisualGrid();
+
+            _spawnController.Initialize(_gridData);
+            _spawnController.OnFillComplete += OnGridFilled;
+            _spawnController.FillGrid();
+        }
+
+        private void OnGridFilled()
+        {
+            Debug.Log("[Match3] Grid filled without initial matches!");
         }
     }
 }
@@ -438,15 +267,88 @@ public void FillGrid_ProducesNoInitialMatches()
 
 ---
 
-## Возможные расширения (не реализуем сейчас)
+## Scene Setup
+
+### Иерархия объектов:
+
+```
+Scene
+├── Main Camera
+├── Grid                    [GridView]
+│   └── Cells
+├── ElementPool             [ElementPool]
+├── Elements                (parent)
+├── ElementFactory          [ElementFactory]
+├── SpawnController         [SpawnController]
+└── GameBootstrap           [GameBootstrap]
+```
+
+### Автоматическая настройка:
+
+```
+Unity Menu → Match3 → Setup Scene
+```
+
+Editor script `Match3SceneSetup.cs` автоматически создаёт все объекты и связывает зависимости.
+
+### Ручная настройка:
+
+1. **SpawnController:**
+   - `_gridView` → Grid
+   - `_factory` → ElementFactory
+
+2. **GameBootstrap:**
+   - `_gridView` → Grid
+   - `_spawnController` → SpawnController
+
+---
+
+## Интеграция
+
+### Использует из Phase 1-3:
+
+| Компонент | Назначение |
+|-----------|-----------|
+| `GridPosition` | Координаты, направления (Left, Down) |
+| `GridData` | GetElement, SetElement |
+| `GridConfig` | ElementTypes[], Width, Height |
+| `GridPositionConverter` | GridToWorld |
+| `ElementFactory` | CreateElement |
+| `GridView` | Config, PositionConverter |
+
+### Предоставляет для Phase 5+:
+
+| Метод | Использует |
+|-------|-----------|
+| `SpawnController.FillGrid()` | GameBootstrap (начальное заполнение) |
+| `SpawnController.SpawnAtTop()` | GravityController (Phase 6) |
+| `ISpawnStrategy` | Точка расширения |
+
+---
+
+## Будущее использование
+
+### В GravityController (Phase 6):
+
+```csharp
+// После падения элементов — спаун новых сверху
+foreach (int column in columnsWithEmptyTop)
+{
+    var newElement = _spawnController.SpawnAtTop(column, offsetAboveGrid: emptyCount);
+    // Элемент создан выше сетки, анимируем падение...
+}
+```
+
+---
+
+## Возможные расширения
 
 ### WeightedSpawnStrategy
 ```csharp
-// Разные веса для разных типов (например, для уровней)
+// Разные веса для разных типов (для уровней)
 public class WeightedSpawnStrategy : ISpawnStrategy
 {
     private Dictionary<ElementType, float> _weights;
-    // ...
 }
 ```
 
@@ -456,23 +358,20 @@ public class WeightedSpawnStrategy : ISpawnStrategy
 public class TutorialSpawnStrategy : ISpawnStrategy
 {
     private ElementType[,] _predefinedGrid;
-    // ...
 }
 ```
 
 ---
 
-## Checklist реализации
+## Checklist
 
-- [ ] Создать папку `Assets/Scripts/Spawn/`
-- [ ] Реализовать `ISpawnStrategy.cs`
-- [ ] Реализовать `NoMatchSpawnStrategy.cs`
-- [ ] Реализовать `SpawnController.cs`
-- [ ] Добавить SpawnController на сцену
-- [ ] Настроить зависимости в Inspector
-- [ ] Создать GameBootstrap или обновить существующий
-- [ ] Тест: запустить сцену, убедиться что нет начальных матчей
-- [ ] (Опционально) Написать unit-тесты
+- [x] Создать папку `Assets/Scripts/Spawn/`
+- [x] Реализовать `ISpawnStrategy.cs`
+- [x] Реализовать `NoMatchSpawnStrategy.cs`
+- [x] Реализовать `SpawnController.cs`
+- [x] Создать `GameBootstrap.cs`
+- [x] Обновить `Match3SceneSetup.cs`
+- [ ] Тест в Unity: запустить сцену, проверить отсутствие начальных матчей
 
 ---
 
