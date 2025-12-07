@@ -8,6 +8,7 @@ namespace Match3.Data
         Green = 3,
         Yellow = 4,
         Purple = 5,
-        Orange = 6
+        Orange = 6,
+        Blocker = 99
     }
 }
