@@ -84,6 +84,12 @@ namespace Match3.Components.Board
             );
         }
 
+        public bool TryWorldToGrid(Vector2 worldPos, out Vector2Int gridPos)
+        {
+            gridPos = WorldToGrid(worldPos);
+            return IsValidPosition(gridPos);
+        }
+
         public IEnumerable<CellComponent> GetAllCells()
         {
             for (int y = 0; y < _height; y++)

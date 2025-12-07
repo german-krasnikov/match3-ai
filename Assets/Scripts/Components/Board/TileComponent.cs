@@ -5,7 +5,7 @@ using Match3.Interfaces;
 
 namespace Match3.Components.Board
 {
-    public class TileComponent : MonoBehaviour, ITile
+    public class TileComponent : MonoBehaviour, ITile, ISwappable
     {
         public event Action<TileComponent> OnDestroyed;
         event Action<ITile> ITile.OnDestroyed
@@ -27,6 +27,7 @@ namespace Match3.Components.Board
         public bool IsMatched { get => _isMatched; set => _isMatched = value; }
         public bool IsMoving => _isMoving;
         public bool IsMatchable => _type != TileType.None;
+        public bool CanSwap => !_isMoving && _type != TileType.None && _type != TileType.Blocker;
 
         public void Initialize(TileType type, TileData data, Vector2Int position)
         {
