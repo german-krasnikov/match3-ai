@@ -1,7 +1,9 @@
 using System.IO;
 using Match3.Data;
 using Match3.Elements;
+using Match3.Game;
 using Match3.Grid;
+using Match3.Spawn;
 using UnityEditor;
 using UnityEngine;
 
@@ -292,6 +294,24 @@ namespace Match3.Editor
             factorySO.FindProperty("_pool").objectReferenceValue = pool;
             factorySO.FindProperty("_elementsParent").objectReferenceValue = elementsParent.transform;
             factorySO.ApplyModifiedPropertiesWithoutUndo();
+
+            // Create SpawnController
+            var spawnGO = new GameObject("SpawnController");
+            var spawnController = spawnGO.AddComponent<SpawnController>();
+
+            var spawnSO = new SerializedObject(spawnController);
+            spawnSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            spawnSO.FindProperty("_factory").objectReferenceValue = factory;
+            spawnSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // Create GameBootstrap
+            var bootstrapGO = new GameObject("GameBootstrap");
+            var bootstrap = bootstrapGO.AddComponent<GameBootstrap>();
+
+            var bootstrapSO = new SerializedObject(bootstrap);
+            bootstrapSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            bootstrapSO.FindProperty("_spawnController").objectReferenceValue = spawnController;
+            bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
 
             // Setup camera
             var cam = Camera.main;
