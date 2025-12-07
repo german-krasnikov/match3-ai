@@ -7,6 +7,7 @@ namespace Match3.Core
     {
         [Header("Dependencies")]
         [SerializeField] private GridComponent _grid;
+        [SerializeField] private MatchDetector _matchDetector;
 
         public bool IsValidSwap(Vector2Int posA, Vector2Int posB)
         {
@@ -28,12 +29,10 @@ namespace Match3.Core
             return true;
         }
 
-        // TODO: Implement when MatchDetector is ready (Phase 3)
         public bool WillCreateMatch(Vector2Int posA, Vector2Int posB)
         {
-            // Stub: always return true for now
-            // Phase 3 will implement actual match checking
-            return true;
+            if (_matchDetector == null) return true;
+            return _matchDetector.WouldCreateMatch(posA, posB);
         }
 
         private bool AreNeighbors(Vector2Int a, Vector2Int b)
