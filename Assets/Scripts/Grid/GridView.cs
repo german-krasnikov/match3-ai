@@ -15,16 +15,35 @@ namespace Match3.Grid
         private GridPositionConverter _positionConverter;
 
         public GridConfig Config => _config;
-        public GridPositionConverter PositionConverter => _positionConverter;
 
-        private void Awake()
+        public GridPositionConverter PositionConverter
         {
+            get
+            {
+                EnsureInitialized();
+                return _positionConverter;
+            }
+        }
+
+        private void Awake() => EnsureInitialized();
+
+        private void EnsureInitialized()
+        {
+            if (_positionConverter != null) return;
             var origin = CalculateGridOrigin();
             _positionConverter = new GridPositionConverter(_config.CellSize, origin);
         }
 
         public void CreateVisualGrid()
         {
+            EnsureInitialized();
+
+            if (_cellPrefab == null)
+            {
+                OnGridReady?.Invoke();
+                return;
+            }
+
             for (int x = 0; x < _config.Width; x++)
             {
                 for (int y = 0; y < _config.Height; y++)
