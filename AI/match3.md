@@ -122,7 +122,7 @@
 
 ---
 
-## Phase 6: Gravity/Fall System
+## Phase 6:ознакомься с @AI//Fall System
 
 ### 6.1 FallData (Data class)
 **File:** `Assets/Scripts/Gravity/FallData.cs` (~20 lines)

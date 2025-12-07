@@ -1,6 +1,6 @@
 # Phase 5: Match Detection — Реализация
 
-## Статус: В РАЗРАБОТКЕ
+## Статус: ✅ ГОТОВО
 
 ## Обзор
 
@@ -72,7 +72,6 @@ Immutable структура данных о найденном матче.
 ```csharp
 using System.Collections.Generic;
 using Match3.Core;
-using Match3.Data;
 
 namespace Match3.Data
 {
@@ -160,7 +159,6 @@ Pure C# класс. Основной алгоритм поиска линий.
 using System.Collections.Generic;
 using Match3.Core;
 using Match3.Data;
-using Match3.Elements;
 using Match3.Grid;
 
 namespace Match3.Match
@@ -169,22 +167,21 @@ namespace Match3.Match
     {
         private const int MinMatchLength = 3;
 
-        private readonly HashSet<GridPosition> _visitedHorizontal = new();
-        private readonly HashSet<GridPosition> _visitedVertical = new();
-        private readonly List<GridPosition> _lineBuffer = new();
+        private readonly HashSet<GridPosition> _visitedH = new();
+        private readonly HashSet<GridPosition> _visitedV = new();
+        private readonly List<GridPosition> _buffer = new();
 
         public List<MatchData> FindAllMatches(GridData grid)
         {
             var matches = new List<MatchData>();
-            _visitedHorizontal.Clear();
-            _visitedVertical.Clear();
+            _visitedH.Clear();
+            _visitedV.Clear();
 
             for (int y = 0; y < grid.Height; y++)
             {
                 for (int x = 0; x < grid.Width; x++)
                 {
-                    var pos = new GridPosition(x, y);
-                    CheckPosition(grid, pos, matches);
+                    CheckPosition(grid, new GridPosition(x, y), matches);
                 }
             }
 
@@ -194,8 +191,8 @@ namespace Match3.Match
         public List<MatchData> FindMatchesAt(GridData grid, IEnumerable<GridPosition> positions)
         {
             var matches = new List<MatchData>();
-            _visitedHorizontal.Clear();
-            _visitedVertical.Clear();
+            _visitedH.Clear();
+            _visitedV.Clear();
 
             foreach (var pos in positions)
             {
@@ -210,68 +207,56 @@ namespace Match3.Match
             var element = grid.GetElement(pos);
             if (element == null) return;
 
-            // Горизонтальная линия
-            if (!_visitedHorizontal.Contains(pos))
+            // Horizontal
+            if (!_visitedH.Contains(pos))
             {
-                var horizontal = GetLine(grid, pos, GridPosition.Left, GridPosition.Right, element.Type);
-                if (horizontal.Count >= MinMatchLength)
+                var line = GetLine(grid, pos, GridPosition.Left, GridPosition.Right, element.Type);
+                if (line.Count >= MinMatchLength)
                 {
-                    matches.Add(new MatchData(horizontal.ToArray(), element.Type, isHorizontal: true));
-                    MarkVisited(_visitedHorizontal, horizontal);
+                    matches.Add(new MatchData(line.ToArray(), element.Type, true));
+                    MarkVisited(_visitedH, line);
                 }
             }
 
-            // Вертикальная линия
-            if (!_visitedVertical.Contains(pos))
+            // Vertical
+            if (!_visitedV.Contains(pos))
             {
-                var vertical = GetLine(grid, pos, GridPosition.Down, GridPosition.Up, element.Type);
-                if (vertical.Count >= MinMatchLength)
+                var line = GetLine(grid, pos, GridPosition.Down, GridPosition.Up, element.Type);
+                if (line.Count >= MinMatchLength)
                 {
-                    matches.Add(new MatchData(vertical.ToArray(), element.Type, isHorizontal: false));
-                    MarkVisited(_visitedVertical, vertical);
+                    matches.Add(new MatchData(line.ToArray(), element.Type, false));
+                    MarkVisited(_visitedV, line);
                 }
             }
         }
 
-        private List<GridPosition> GetLine(
-            GridData grid,
-            GridPosition start,
-            GridPosition negativeDir,
-            GridPosition positiveDir,
-            ElementType type)
+        private List<GridPosition> GetLine(GridData grid, GridPosition start, GridPosition negDir, GridPosition posDir, ElementType type)
         {
-            _lineBuffer.Clear();
-            _lineBuffer.Add(start);
+            _buffer.Clear();
+            _buffer.Add(start);
 
-            // Расширяем в отрицательном направлении
-            Extend(grid, start, negativeDir, type);
+            Extend(grid, start, negDir, type);
+            Extend(grid, start, posDir, type);
 
-            // Расширяем в положительном направлении
-            Extend(grid, start, positiveDir, type);
-
-            return _lineBuffer;
+            return _buffer;
         }
 
-        private void Extend(GridData grid, GridPosition start, GridPosition direction, ElementType type)
+        private void Extend(GridData grid, GridPosition start, GridPosition dir, ElementType type)
         {
-            var current = start + direction;
-
+            var current = start + dir;
             while (grid.IsValidPosition(current))
             {
-                var element = grid.GetElement(current);
-                if (element == null || element.Type != type) break;
-
-                _lineBuffer.Add(current);
-                current = current + direction;
+                var el = grid.GetElement(current);
+                if (el == null || el.Type != type) break;
+                _buffer.Add(current);
+                current = current + dir;
             }
         }
 
         private void MarkVisited(HashSet<GridPosition> visited, List<GridPosition> positions)
         {
             foreach (var pos in positions)
-            {
                 visited.Add(pos);
-            }
         }
     }
 }
@@ -651,8 +636,8 @@ public void DoesNotFindMatchOfTwo()
 - [x] Создать `Assets/Scripts/Match/MatchController.cs`
 - [x] Добавить MatchController в сцену (Match3SceneSetup)
 - [x] Обновить GameBootstrap
-- [ ] Тест: запустить сцену, проверить что начальных матчей нет
-- [ ] Тест: временно сломать NoMatchSpawnStrategy, убедиться что матчи находятся
+- [x] Тест: запустить сцену, проверить что начальных матчей нет
+- [x] Тест: временно сломать NoMatchSpawnStrategy, убедиться что матчи находятся
 
 ---
 
