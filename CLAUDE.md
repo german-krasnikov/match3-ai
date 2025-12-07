@@ -73,3 +73,4 @@ Assets/
 - Use `_camelCase` for private fields with SerializeField
 - Use events (`Action`, `Action<T>`) for component communication
 - Prefer `TryGetComponent` over `GetComponent` for null safety
+- не документируй код
