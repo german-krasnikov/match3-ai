@@ -3,8 +3,10 @@ using Match3.Data;
 using Match3.Elements;
 using Match3.Game;
 using Match3.Grid;
+using Match3.Input;
 using Match3.Match;
 using Match3.Spawn;
+using Match3.Swap;
 using UnityEditor;
 using UnityEngine;
 
@@ -37,9 +39,10 @@ namespace Match3.Editor
             var sprite = CreateDefaultSprite();
             var elementTypes = CreateElementTypes(sprite);
             var gridConfig = CreateGridConfig(elementTypes);
+            var inputConfig = CreateInputConfig();
             var elementPrefab = CreateElementPrefab();
             var cellPrefab = CreateCellPrefab();
-            SetupSceneHierarchy(gridConfig, elementPrefab, cellPrefab);
+            SetupSceneHierarchy(gridConfig, inputConfig, elementPrefab, cellPrefab);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -54,6 +57,7 @@ namespace Match3.Editor
             var sprite = CreateDefaultSprite();
             var elementTypes = CreateElementTypes(sprite);
             CreateGridConfig(elementTypes);
+            CreateInputConfig();
             CreateElementPrefab();
             CreateCellPrefab();
 
@@ -71,6 +75,67 @@ namespace Match3.Editor
             CreateElementTypes(sprite);
             AssetDatabase.SaveAssets();
             Debug.Log("[Match3] Element sprites fixed!");
+        }
+
+        [MenuItem("Match3/Add Swap System", false, 12)]
+        public static void AddSwapSystem()
+        {
+            var gridView = Object.FindFirstObjectByType<GridView>();
+            if (gridView == null)
+            {
+                Debug.LogError("[Match3] GridView not found. Run 'Setup Scene' first.");
+                return;
+            }
+
+            if (Object.FindFirstObjectByType<SwapController>() != null)
+            {
+                Debug.LogWarning("[Match3] SwapController already exists.");
+                return;
+            }
+
+            var gridConfig = gridView.Config;
+            var inputConfig = CreateInputConfig();
+
+            // SwipeInputHandler
+            var inputGO = new GameObject("SwipeInputHandler");
+            var inputHandler = inputGO.AddComponent<SwipeInputHandler>();
+
+            var inputSO = new SerializedObject(inputHandler);
+            inputSO.FindProperty("_config").objectReferenceValue = inputConfig;
+            inputSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            inputSO.FindProperty("_camera").objectReferenceValue = Camera.main;
+            inputSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // SwapAnimator
+            var animatorGO = new GameObject("SwapAnimator");
+            var swapAnimator = animatorGO.AddComponent<SwapAnimator>();
+
+            var animatorSO = new SerializedObject(swapAnimator);
+            animatorSO.FindProperty("_config").objectReferenceValue = gridConfig;
+            animatorSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            animatorSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // SwapController
+            var swapGO = new GameObject("SwapController");
+            var swapController = swapGO.AddComponent<SwapController>();
+
+            var swapSO = new SerializedObject(swapController);
+            swapSO.FindProperty("_inputHandler").objectReferenceValue = inputHandler;
+            swapSO.FindProperty("_animator").objectReferenceValue = swapAnimator;
+            swapSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            swapSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // Link to GameBootstrap
+            var bootstrap = Object.FindFirstObjectByType<GameBootstrap>();
+            if (bootstrap != null)
+            {
+                var bootstrapSO = new SerializedObject(bootstrap);
+                bootstrapSO.FindProperty("_swapController").objectReferenceValue = swapController;
+                bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            Selection.activeGameObject = swapGO;
+            Debug.Log("[Match3] Swap System added!");
         }
 
         [MenuItem("Match3/Add Match System", false, 11)]
@@ -199,6 +264,19 @@ namespace Match3.Editor
             }
 
             return types;
+        }
+
+        private static InputConfig CreateInputConfig()
+        {
+            string path = $"{DataPath}/InputConfig.asset";
+
+            var existing = AssetDatabase.LoadAssetAtPath<InputConfig>(path);
+            if (existing != null) return existing;
+
+            var config = ScriptableObject.CreateInstance<InputConfig>();
+            AssetDatabase.CreateAsset(config, path);
+            Debug.Log("[Match3] Created InputConfig");
+            return config;
         }
 
         private static GridConfig CreateGridConfig(ElementType[] elementTypes)
@@ -347,9 +425,8 @@ namespace Match3.Editor
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
-        private static void SetupSceneHierarchy(GridConfig config, GameObject elementPrefab, GameObject cellPrefab)
+        private static void SetupSceneHierarchy(GridConfig gridConfig, InputConfig inputConfig, GameObject elementPrefab, GameObject cellPrefab)
         {
-            // Clean up existing
             var existingGrid = Object.FindFirstObjectByType<GridView>();
             if (existingGrid != null)
             {
@@ -357,21 +434,20 @@ namespace Match3.Editor
                 return;
             }
 
-            // Create Grid
+            // Grid
             var gridGO = new GameObject("Grid");
             var gridView = gridGO.AddComponent<GridView>();
 
             var gridSO = new SerializedObject(gridView);
-            gridSO.FindProperty("_config").objectReferenceValue = config;
+            gridSO.FindProperty("_config").objectReferenceValue = gridConfig;
             gridSO.FindProperty("_cellPrefab").objectReferenceValue = cellPrefab.GetComponent<SpriteRenderer>();
 
-            // Create Cells parent
             var cellsParent = new GameObject("Cells");
             cellsParent.transform.SetParent(gridGO.transform);
             gridSO.FindProperty("_cellsParent").objectReferenceValue = cellsParent.transform;
             gridSO.ApplyModifiedPropertiesWithoutUndo();
 
-            // Create ElementPool
+            // ElementPool
             var poolGO = new GameObject("ElementPool");
             var pool = poolGO.AddComponent<ElementPool>();
 
@@ -380,10 +456,10 @@ namespace Match3.Editor
             poolSO.FindProperty("_initialSize").intValue = 64;
             poolSO.ApplyModifiedPropertiesWithoutUndo();
 
-            // Create Elements parent
+            // Elements parent
             var elementsParent = new GameObject("Elements");
 
-            // Create ElementFactory
+            // ElementFactory
             var factoryGO = new GameObject("ElementFactory");
             var factory = factoryGO.AddComponent<ElementFactory>();
 
@@ -392,7 +468,7 @@ namespace Match3.Editor
             factorySO.FindProperty("_elementsParent").objectReferenceValue = elementsParent.transform;
             factorySO.ApplyModifiedPropertiesWithoutUndo();
 
-            // Create SpawnController
+            // SpawnController
             var spawnGO = new GameObject("SpawnController");
             var spawnController = spawnGO.AddComponent<SpawnController>();
 
@@ -401,11 +477,40 @@ namespace Match3.Editor
             spawnSO.FindProperty("_factory").objectReferenceValue = factory;
             spawnSO.ApplyModifiedPropertiesWithoutUndo();
 
-            // Create MatchController
+            // MatchController
             var matchGO = new GameObject("MatchController");
             var matchController = matchGO.AddComponent<MatchController>();
 
-            // Create GameBootstrap
+            // SwipeInputHandler
+            var inputGO = new GameObject("SwipeInputHandler");
+            var inputHandler = inputGO.AddComponent<SwipeInputHandler>();
+
+            var inputSO = new SerializedObject(inputHandler);
+            inputSO.FindProperty("_config").objectReferenceValue = inputConfig;
+            inputSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            inputSO.FindProperty("_camera").objectReferenceValue = Camera.main;
+            inputSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // SwapAnimator
+            var animatorGO = new GameObject("SwapAnimator");
+            var swapAnimator = animatorGO.AddComponent<SwapAnimator>();
+
+            var animatorSO = new SerializedObject(swapAnimator);
+            animatorSO.FindProperty("_config").objectReferenceValue = gridConfig;
+            animatorSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            animatorSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // SwapController
+            var swapGO = new GameObject("SwapController");
+            var swapController = swapGO.AddComponent<SwapController>();
+
+            var swapSO = new SerializedObject(swapController);
+            swapSO.FindProperty("_inputHandler").objectReferenceValue = inputHandler;
+            swapSO.FindProperty("_animator").objectReferenceValue = swapAnimator;
+            swapSO.FindProperty("_gridView").objectReferenceValue = gridView;
+            swapSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // GameBootstrap
             var bootstrapGO = new GameObject("GameBootstrap");
             var bootstrap = bootstrapGO.AddComponent<GameBootstrap>();
 
@@ -413,9 +518,10 @@ namespace Match3.Editor
             bootstrapSO.FindProperty("_gridView").objectReferenceValue = gridView;
             bootstrapSO.FindProperty("_spawnController").objectReferenceValue = spawnController;
             bootstrapSO.FindProperty("_matchController").objectReferenceValue = matchController;
+            bootstrapSO.FindProperty("_swapController").objectReferenceValue = swapController;
             bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
 
-            // Setup camera
+            // Camera
             var cam = Camera.main;
             if (cam != null)
             {
@@ -425,9 +531,7 @@ namespace Match3.Editor
                 cam.backgroundColor = new Color(0.1f, 0.1f, 0.15f);
             }
 
-            // Select grid for visibility
             Selection.activeGameObject = gridGO;
-
             Debug.Log("[Match3] Scene hierarchy created");
         }
 
