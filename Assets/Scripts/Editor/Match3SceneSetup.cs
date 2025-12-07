@@ -3,6 +3,7 @@ using Match3.Data;
 using Match3.Elements;
 using Match3.Game;
 using Match3.Grid;
+using Match3.Match;
 using Match3.Spawn;
 using UnityEditor;
 using UnityEngine;
@@ -70,6 +71,32 @@ namespace Match3.Editor
             CreateElementTypes(sprite);
             AssetDatabase.SaveAssets();
             Debug.Log("[Match3] Element sprites fixed!");
+        }
+
+        [MenuItem("Match3/Add Match System", false, 11)]
+        public static void AddMatchSystem()
+        {
+            var existingMatch = Object.FindFirstObjectByType<MatchController>();
+            if (existingMatch != null)
+            {
+                Debug.LogWarning("[Match3] MatchController already exists.");
+                return;
+            }
+
+            var matchGO = new GameObject("MatchController");
+            var matchController = matchGO.AddComponent<MatchController>();
+
+            // Link to GameBootstrap if exists
+            var bootstrap = Object.FindFirstObjectByType<GameBootstrap>();
+            if (bootstrap != null)
+            {
+                var bootstrapSO = new SerializedObject(bootstrap);
+                bootstrapSO.FindProperty("_matchController").objectReferenceValue = matchController;
+                bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            Selection.activeGameObject = matchGO;
+            Debug.Log("[Match3] Match System added!");
         }
 
         [MenuItem("Match3/Add Spawn System", false, 10)]
@@ -374,6 +401,10 @@ namespace Match3.Editor
             spawnSO.FindProperty("_factory").objectReferenceValue = factory;
             spawnSO.ApplyModifiedPropertiesWithoutUndo();
 
+            // Create MatchController
+            var matchGO = new GameObject("MatchController");
+            var matchController = matchGO.AddComponent<MatchController>();
+
             // Create GameBootstrap
             var bootstrapGO = new GameObject("GameBootstrap");
             var bootstrap = bootstrapGO.AddComponent<GameBootstrap>();
@@ -381,6 +412,7 @@ namespace Match3.Editor
             var bootstrapSO = new SerializedObject(bootstrap);
             bootstrapSO.FindProperty("_gridView").objectReferenceValue = gridView;
             bootstrapSO.FindProperty("_spawnController").objectReferenceValue = spawnController;
+            bootstrapSO.FindProperty("_matchController").objectReferenceValue = matchController;
             bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
 
             // Setup camera

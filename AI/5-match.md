@@ -644,13 +644,13 @@ public void DoesNotFindMatchOfTwo()
 
 ## Checklist
 
-- [ ] Создать папку `Assets/Scripts/Match/`
-- [ ] Создать `Assets/Scripts/Data/MatchData.cs`
-- [ ] Создать `Assets/Scripts/Match/IMatchFinder.cs`
-- [ ] Создать `Assets/Scripts/Match/LineMatchFinder.cs`
-- [ ] Создать `Assets/Scripts/Match/MatchController.cs`
-- [ ] Добавить MatchController в сцену
-- [ ] Обновить GameBootstrap
+- [x] Создать папку `Assets/Scripts/Match/`
+- [x] Создать `Assets/Scripts/Data/MatchData.cs`
+- [x] Создать `Assets/Scripts/Match/IMatchFinder.cs`
+- [x] Создать `Assets/Scripts/Match/LineMatchFinder.cs`
+- [x] Создать `Assets/Scripts/Match/MatchController.cs`
+- [x] Добавить MatchController в сцену (Match3SceneSetup)
+- [x] Обновить GameBootstrap
 - [ ] Тест: запустить сцену, проверить что начальных матчей нет
 - [ ] Тест: временно сломать NoMatchSpawnStrategy, убедиться что матчи находятся
 
