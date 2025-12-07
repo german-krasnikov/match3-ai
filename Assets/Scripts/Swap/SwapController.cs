@@ -80,7 +80,6 @@ namespace Match3.Swap
             _animator.AnimateInvalidSwap(elementA, elementB, () =>
             {
                 _isSwapping = false;
-                _inputHandler.SetEnabled(true);
                 OnSwapFailed?.Invoke();
             });
         }

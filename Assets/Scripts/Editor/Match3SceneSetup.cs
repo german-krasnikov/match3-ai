@@ -1,7 +1,10 @@
 using System.IO;
 using Match3.Data;
+using Match3.Destruction;
 using Match3.Elements;
 using Match3.Game;
+using Match3.GameLoop;
+using Match3.Gravity;
 using Match3.Grid;
 using Match3.Input;
 using Match3.Match;
@@ -75,6 +78,82 @@ namespace Match3.Editor
             CreateElementTypes(sprite);
             AssetDatabase.SaveAssets();
             Debug.Log("[Match3] Element sprites fixed!");
+        }
+
+        [MenuItem("Match3/Add Game Loop System", false, 13)]
+        public static void AddGameLoopSystem()
+        {
+            var gridView = Object.FindFirstObjectByType<GridView>();
+            if (gridView == null)
+            {
+                Debug.LogError("[Match3] GridView not found. Run 'Setup Scene' first.");
+                return;
+            }
+
+            var factory = Object.FindFirstObjectByType<ElementFactory>();
+            var spawnController = Object.FindFirstObjectByType<SpawnController>();
+            var matchController = Object.FindFirstObjectByType<MatchController>();
+            var swapController = Object.FindFirstObjectByType<SwapController>();
+
+            if (factory == null || spawnController == null || matchController == null || swapController == null)
+            {
+                Debug.LogError("[Match3] Missing controllers. Run 'Setup Scene' first.");
+                return;
+            }
+
+            // DestructionController
+            var destructionController = Object.FindFirstObjectByType<DestructionController>();
+            if (destructionController == null)
+            {
+                var destructionGO = new GameObject("DestructionController");
+                destructionController = destructionGO.AddComponent<DestructionController>();
+
+                var destructionSO = new SerializedObject(destructionController);
+                destructionSO.FindProperty("_factory").objectReferenceValue = factory;
+                destructionSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            // GravityController
+            var gravityController = Object.FindFirstObjectByType<GravityController>();
+            if (gravityController == null)
+            {
+                var gravityGO = new GameObject("GravityController");
+                gravityController = gravityGO.AddComponent<GravityController>();
+
+                var gravitySO = new SerializedObject(gravityController);
+                gravitySO.FindProperty("_gridView").objectReferenceValue = gridView;
+                gravitySO.FindProperty("_spawnController").objectReferenceValue = spawnController;
+                gravitySO.FindProperty("_factory").objectReferenceValue = factory;
+                gravitySO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            // GameStateMachine
+            var stateMachine = Object.FindFirstObjectByType<GameStateMachine>();
+            if (stateMachine == null)
+            {
+                var stateMachineGO = new GameObject("GameStateMachine");
+                stateMachine = stateMachineGO.AddComponent<GameStateMachine>();
+
+                var stateMachineSO = new SerializedObject(stateMachine);
+                stateMachineSO.FindProperty("_swapController").objectReferenceValue = swapController;
+                stateMachineSO.FindProperty("_matchController").objectReferenceValue = matchController;
+                stateMachineSO.FindProperty("_destructionController").objectReferenceValue = destructionController;
+                stateMachineSO.FindProperty("_gravityController").objectReferenceValue = gravityController;
+                stateMachineSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            // Update GameBootstrap
+            var bootstrap = Object.FindFirstObjectByType<GameBootstrap>();
+            if (bootstrap != null)
+            {
+                var bootstrapSO = new SerializedObject(bootstrap);
+                bootstrapSO.FindProperty("_destructionController").objectReferenceValue = destructionController;
+                bootstrapSO.FindProperty("_gravityController").objectReferenceValue = gravityController;
+                bootstrapSO.FindProperty("_stateMachine").objectReferenceValue = stateMachine;
+                bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            Debug.Log("[Match3] Game Loop System added!");
         }
 
         [MenuItem("Match3/Add Swap System", false, 12)]
@@ -510,6 +589,35 @@ namespace Match3.Editor
             swapSO.FindProperty("_gridView").objectReferenceValue = gridView;
             swapSO.ApplyModifiedPropertiesWithoutUndo();
 
+            // DestructionController
+            var destructionGO = new GameObject("DestructionController");
+            var destructionController = destructionGO.AddComponent<DestructionController>();
+
+            var destructionSO = new SerializedObject(destructionController);
+            destructionSO.FindProperty("_factory").objectReferenceValue = factory;
+            destructionSO.ApplyModifiedPropertiesWithoutUndo();
+
+            // GravityController
+            var gravityGO = new GameObject("GravityController");
+            var gravityController = gravityGO.AddComponent<GravityController>();
+
+            var gravitySO = new SerializedObject(gravityController);
+            gravitySO.FindProperty("_gridView").objectReferenceValue = gridView;
+            gravitySO.FindProperty("_spawnController").objectReferenceValue = spawnController;
+            gravitySO.FindProperty("_factory").objectReferenceValue = factory;
+            gravitySO.ApplyModifiedPropertiesWithoutUndo();
+
+            // GameStateMachine
+            var stateMachineGO = new GameObject("GameStateMachine");
+            var stateMachine = stateMachineGO.AddComponent<GameStateMachine>();
+
+            var stateMachineSO = new SerializedObject(stateMachine);
+            stateMachineSO.FindProperty("_swapController").objectReferenceValue = swapController;
+            stateMachineSO.FindProperty("_matchController").objectReferenceValue = matchController;
+            stateMachineSO.FindProperty("_destructionController").objectReferenceValue = destructionController;
+            stateMachineSO.FindProperty("_gravityController").objectReferenceValue = gravityController;
+            stateMachineSO.ApplyModifiedPropertiesWithoutUndo();
+
             // GameBootstrap
             var bootstrapGO = new GameObject("GameBootstrap");
             var bootstrap = bootstrapGO.AddComponent<GameBootstrap>();
@@ -519,6 +627,9 @@ namespace Match3.Editor
             bootstrapSO.FindProperty("_spawnController").objectReferenceValue = spawnController;
             bootstrapSO.FindProperty("_matchController").objectReferenceValue = matchController;
             bootstrapSO.FindProperty("_swapController").objectReferenceValue = swapController;
+            bootstrapSO.FindProperty("_destructionController").objectReferenceValue = destructionController;
+            bootstrapSO.FindProperty("_gravityController").objectReferenceValue = gravityController;
+            bootstrapSO.FindProperty("_stateMachine").objectReferenceValue = stateMachine;
             bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
 
             // Camera
