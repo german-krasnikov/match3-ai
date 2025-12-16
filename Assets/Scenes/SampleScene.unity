@@ -135,6 +135,9 @@ GameObject:
   - component: {fileID: 101368087}
   - component: {fileID: 101368086}
   - component: {fileID: 101368088}
+  - component: {fileID: 101368091}
+  - component: {fileID: 101368090}
+  - component: {fileID: 101368089}
   m_Layer: 0
   m_Name: Board
   m_TagString: Untagged
@@ -211,6 +214,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 341e1185b488641729cc8dc1e8799dde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _grid: {fileID: 101368084}
+--- !u!114 &101368089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101368083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c34c8bbaf19a4e508031c6ffe93868e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _grid: {fileID: 101368084}
+  _config: {fileID: 11400000, guid: bd765f8b643b94e71b721437a0bf7197, type: 2}
+  _swap: {fileID: 101368090}
+  _camera: {fileID: 519420031}
+--- !u!114 &101368090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101368083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5acfeaa0bffd477686bfd694a256fad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animation: {fileID: 101368091}
+  _debugGrid: {fileID: 101368084}
+--- !u!114 &101368091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101368083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18453a510be824b9aaff20294c4884a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _config: {fileID: 11400000, guid: bd765f8b643b94e71b721437a0bf7197, type: 2}
   _grid: {fileID: 101368084}
 --- !u!1 &519420028
 GameObject:

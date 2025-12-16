@@ -6,6 +6,7 @@ public static class Match3SceneSetup
 {
     private const string ConfigPath = "Assets/Configs/GridConfig.asset";
     private const string ElementConfigPath = "Assets/Configs/ElementConfig.asset";
+    private const string SwapConfigPath = "Assets/Configs/SwapConfig.asset";
     private const string ElementPrefabPath = "Assets/Prefabs/Element.prefab";
     private const string ConfigFolder = "Assets/Configs";
 
@@ -64,6 +65,92 @@ public static class Match3SceneSetup
 
         Selection.activeGameObject = board;
         Debug.Log("Match Detection setup complete! Use ContextMenu on MatchDetectorComponent to test.");
+    }
+
+    [MenuItem("Match3/Setup Input Swap (Stage 5)")]
+    public static void SetupInputSwap()
+    {
+        var grid = Object.FindFirstObjectByType<GridComponent>();
+        if (grid == null)
+        {
+            Debug.LogError("GridComponent not found. Run Match3/Setup Scene first.");
+            return;
+        }
+
+        var board = grid.gameObject;
+        var swapConfig = GetOrCreateSwapConfig();
+
+        // SwapAnimationComponent
+        var swapAnim = board.GetComponent<SwapAnimationComponent>();
+        if (swapAnim == null)
+        {
+            swapAnim = board.AddComponent<SwapAnimationComponent>();
+            Undo.RegisterCreatedObjectUndo(swapAnim, "Add SwapAnimationComponent");
+        }
+        SetSwapAnimationRefs(swapAnim, swapConfig, grid);
+
+        // SwapComponent
+        var swap = board.GetComponent<SwapComponent>();
+        if (swap == null)
+        {
+            swap = board.AddComponent<SwapComponent>();
+            Undo.RegisterCreatedObjectUndo(swap, "Add SwapComponent");
+        }
+        SetSwapComponentRefs(swap, swapAnim, grid);
+
+        // InputComponent
+        var input = board.GetComponent<InputComponent>();
+        if (input == null)
+        {
+            input = board.AddComponent<InputComponent>();
+            Undo.RegisterCreatedObjectUndo(input, "Add InputComponent");
+        }
+        SetInputComponentRefs(input, grid, swapConfig, swap);
+
+        EditorUtility.SetDirty(board);
+        Selection.activeGameObject = board;
+        Debug.Log("Input & Swap setup complete! Press Play and swipe elements.");
+    }
+
+    private static SwapConfig GetOrCreateSwapConfig()
+    {
+        var config = AssetDatabase.LoadAssetAtPath<SwapConfig>(SwapConfigPath);
+        if (config != null) return config;
+
+        if (!AssetDatabase.IsValidFolder(ConfigFolder))
+            AssetDatabase.CreateFolder("Assets", "Configs");
+
+        config = ScriptableObject.CreateInstance<SwapConfig>();
+        AssetDatabase.CreateAsset(config, SwapConfigPath);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Created SwapConfig at {SwapConfigPath}");
+        return config;
+    }
+
+    private static void SetSwapAnimationRefs(SwapAnimationComponent anim, SwapConfig config, GridComponent grid)
+    {
+        var so = new SerializedObject(anim);
+        so.FindProperty("_config").objectReferenceValue = config;
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetSwapComponentRefs(SwapComponent swap, SwapAnimationComponent anim, GridComponent grid)
+    {
+        var so = new SerializedObject(swap);
+        so.FindProperty("_animation").objectReferenceValue = anim;
+        so.FindProperty("_debugGrid").objectReferenceValue = grid;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetInputComponentRefs(InputComponent input, GridComponent grid, SwapConfig config, SwapComponent swap)
+    {
+        var so = new SerializedObject(input);
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.FindProperty("_config").objectReferenceValue = config;
+        so.FindProperty("_swap").objectReferenceValue = swap;
+        so.FindProperty("_camera").objectReferenceValue = Camera.main;
+        so.ApplyModifiedProperties();
     }
 
     [MenuItem("Match3/Setup Spawn (Stage 3)")]
