@@ -5,6 +5,8 @@ using System.IO;
 public static class Match3SceneSetup
 {
     private const string ConfigPath = "Assets/Configs/GridConfig.asset";
+    private const string ElementConfigPath = "Assets/Configs/ElementConfig.asset";
+    private const string ElementPrefabPath = "Assets/Prefabs/Element.prefab";
     private const string ConfigFolder = "Assets/Configs";
 
     [MenuItem("Match3/Setup Scene %#m")]
@@ -24,6 +26,167 @@ public static class Match3SceneSetup
         var config = GetOrCreateConfig();
         Selection.activeObject = config;
         EditorGUIUtility.PingObject(config);
+    }
+
+    [MenuItem("Match3/Setup Elements (Stage 2)")]
+    public static void SetupElements()
+    {
+        var prefab = GetOrCreateElementPrefab();
+        var config = GetOrCreateElementConfig(prefab);
+        var factory = CreateElementFactory(config);
+
+        Selection.activeGameObject = factory;
+        Debug.Log("Elements setup complete! Use Match3/Test Elements to spawn test elements.");
+    }
+
+    [MenuItem("Match3/Test Elements")]
+    public static void TestElements()
+    {
+        var factory = Object.FindFirstObjectByType<ElementFactory>();
+        var grid = Object.FindFirstObjectByType<GridComponent>();
+
+        if (factory == null)
+        {
+            Debug.LogError("ElementFactory not found. Run Match3/Setup Elements first.");
+            return;
+        }
+        if (grid == null)
+        {
+            Debug.LogError("GridComponent not found. Run Match3/Setup Scene first.");
+            return;
+        }
+
+        // Spawn one element of each type in a row
+        for (int i = 0; i < 5; i++)
+        {
+            var type = (ElementType)i;
+            var pos = grid.GridToWorld(i + 1, grid.Height / 2);
+            var element = factory.Create(type, pos, i + 1, grid.Height / 2);
+            Undo.RegisterCreatedObjectUndo(element.gameObject, "Test Element");
+        }
+
+        Debug.Log("Created 5 test elements (one of each type)");
+    }
+
+    private static ElementComponent GetOrCreateElementPrefab()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<ElementComponent>(ElementPrefabPath);
+        if (existing != null)
+        {
+            Debug.Log("Element prefab already exists");
+            return existing;
+        }
+
+        if (!AssetDatabase.IsValidFolder("Assets/Prefabs"))
+            AssetDatabase.CreateFolder("Assets", "Prefabs");
+
+        var go = new GameObject("Element");
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = GetDefaultSprite();
+        go.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
+
+        var element = go.AddComponent<ElementComponent>();
+        SetSpriteRenderer(element, sr);
+
+        var prefab = PrefabUtility.SaveAsPrefabAsset(go, ElementPrefabPath);
+        Object.DestroyImmediate(go);
+
+        Debug.Log($"Created Element prefab at {ElementPrefabPath}");
+        return prefab.GetComponent<ElementComponent>();
+    }
+
+    private static ElementConfig GetOrCreateElementConfig(ElementComponent prefab)
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<ElementConfig>(ElementConfigPath);
+        if (existing != null)
+        {
+            Debug.Log("ElementConfig already exists");
+            return existing;
+        }
+
+        var config = ScriptableObject.CreateInstance<ElementConfig>();
+
+        var so = new SerializedObject(config);
+        so.FindProperty("_defaultSprite").objectReferenceValue = GetDefaultSprite();
+        so.FindProperty("_prefab").objectReferenceValue = prefab;
+
+        var colors = so.FindProperty("_colors");
+        colors.arraySize = 5;
+        colors.GetArrayElementAtIndex(0).colorValue = Color.red;
+        colors.GetArrayElementAtIndex(1).colorValue = Color.blue;
+        colors.GetArrayElementAtIndex(2).colorValue = Color.green;
+        colors.GetArrayElementAtIndex(3).colorValue = Color.yellow;
+        colors.GetArrayElementAtIndex(4).colorValue = new Color(0.6f, 0.2f, 0.8f);
+        so.ApplyModifiedProperties();
+
+        AssetDatabase.CreateAsset(config, ElementConfigPath);
+        AssetDatabase.SaveAssets();
+
+        Debug.Log($"Created ElementConfig at {ElementConfigPath}");
+        return config;
+    }
+
+    private static GameObject CreateElementFactory(ElementConfig config)
+    {
+        var existing = GameObject.Find("ElementFactory");
+        if (existing != null)
+        {
+            Debug.Log("ElementFactory already exists, updating config");
+            var factory = existing.GetComponent<ElementFactory>();
+            if (factory == null)
+                factory = existing.AddComponent<ElementFactory>();
+            SetElementFactoryConfig(factory, config);
+            return existing;
+        }
+
+        var factoryGO = new GameObject("ElementFactory");
+        var factoryComp = factoryGO.AddComponent<ElementFactory>();
+
+        var container = new GameObject("Elements");
+        container.transform.SetParent(factoryGO.transform);
+
+        SetElementFactoryConfig(factoryComp, config);
+        SetElementFactoryContainer(factoryComp, container.transform);
+
+        Undo.RegisterCreatedObjectUndo(factoryGO, "Create ElementFactory");
+        Debug.Log("Created ElementFactory GameObject");
+
+        return factoryGO;
+    }
+
+    private static Sprite GetDefaultSprite()
+    {
+        var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+        if (knob != null) return knob;
+
+        var allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+        foreach (var s in allSprites)
+        {
+            if (s.name == "Knob" || s.name == "UISprite") return s;
+        }
+
+        return Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+    }
+
+    private static void SetSpriteRenderer(ElementComponent element, SpriteRenderer sr)
+    {
+        var so = new SerializedObject(element);
+        so.FindProperty("_spriteRenderer").objectReferenceValue = sr;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetElementFactoryConfig(ElementFactory factory, ElementConfig config)
+    {
+        var so = new SerializedObject(factory);
+        so.FindProperty("_config").objectReferenceValue = config;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetElementFactoryContainer(ElementFactory factory, Transform container)
+    {
+        var so = new SerializedObject(factory);
+        so.FindProperty("_container").objectReferenceValue = container;
+        so.ApplyModifiedProperties();
     }
 
     private static GridConfig GetOrCreateConfig()
