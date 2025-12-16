@@ -195,37 +195,79 @@ private Cell _swapCellB;
 
 ---
 
-## Порядок реализации
+## Порядок реализации (Постепенный рефакторинг)
 
-### Шаг 1: Создать BoardState.cs
+### Фаза 1: Создание новых компонентов (без изменения существующих)
+
+#### Шаг 1.1: BoardState.cs
 - [ ] Enum с 6 состояниями
+- [ ] Файл полностью независим
 
-### Шаг 2: Создать GameLoopController.cs (заглушка)
-- [ ] Базовая структура с полями
-- [ ] SetState() с логированием
-- [ ] Подписка на InputComponent
+#### Шаг 1.2: GameLoopController.cs — базовая версия
+- [ ] Все SerializeField зависимости
+- [ ] `CurrentState` property
+- [ ] `SetState()` с логированием и управлением `_input.IsEnabled`
+- [ ] `OnStateChanged` event
+- [ ] **Пока НЕ подключаем к InputComponent**
 
-### Шаг 3: Рефакторинг SwapComponent
-- [ ] Удалить ссылки на match/destroy/gravity
-- [ ] Упростить callbacks
-- [ ] Проверить что swap/swapback работают изолированно
+**Проверка:** Компилируется, можно добавить на сцену
 
-### Шаг 4: Рефакторинг InputComponent
-- [ ] Удалить подписку на SwapComponent
-- [ ] IsEnabled управляется извне
+---
 
-### Шаг 5: Реализовать GameLoopController полностью
-- [ ] OnSwapRequested → Swapping
-- [ ] CheckMatches logic
-- [ ] SwapBack path
-- [ ] Destroy → Gravity → Refill chain
-- [ ] Cascade loop (повторная проверка после падения)
+### Фаза 2: GameLoopController берёт управление (SwapComponent ещё работает)
 
-### Шаг 6: Интеграционное тестирование
+#### Шаг 2.1: Добавить флаг в SwapComponent
+```csharp
+[SerializeField] private bool _useLegacyFlow = true;
+```
+Когда `false` — SwapComponent не вызывает match/destroy/gravity сам.
+
+#### Шаг 2.2: GameLoopController подписывается на события
+- [ ] Подписка на `_input.OnSwapRequested`
+- [ ] Подписка на `_swap.OnSwapCompleted`
+- [ ] Подписка на `_destroy.OnDestructionComplete`
+- [ ] При получении события — `SetState()` + логирование
+
+#### Шаг 2.3: Реализовать flow в GameLoopController
+- [ ] `OnSwapRequested()` → вызывает `_swap.RequestSwap()`, state = Swapping
+- [ ] `OnSwapCompleted()` → проверяет матчи
+- [ ] `ProcessMatches()` / `HandleNoMatch()` → destroy или swap back
+- [ ] `OnDestroyComplete()` → gravity + refill
+- [ ] `OnFallComplete()` → **каскадная проверка** (НОВОЕ!)
+- [ ] Цикл пока есть матчи
+
+**Проверка:** `_useLegacyFlow = false`, полный цикл работает через GameLoopController
+
+---
+
+### Фаза 3: Очистка SwapComponent
+
+#### Шаг 3.1: Удалить legacy код из SwapComponent
+- [ ] Удалить `_useLegacyFlow`
+- [ ] Удалить ссылки: `_matchDetector`, `_destroy`, `_gravity`, `_fallAnimation`, `_refill`
+- [ ] Удалить методы: `OnDestructionComplete()`, `OnFallComplete()`
+- [ ] Упростить `OnSwapAnimationComplete()` — только событие
+
+#### Шаг 3.2: Очистить InputComponent
+- [ ] Удалить подписку на `_swap.OnSwapStarted/OnSwapCompleted`
+- [ ] Удалить `OnSwapStarted()`, `OnSwapCompleted()`
+- [ ] `IsEnabled` теперь управляется только из GameLoopController
+
+---
+
+### Фаза 4: Тестирование и полировка
+
+#### Шаг 4.1: Интеграционные тесты
 - [ ] Обычный матч (3 в ряд)
 - [ ] Swap без матча (возврат)
 - [ ] Каскадный матч (матч после падения)
-- [ ] Длинная цепочка каскадов
+- [ ] Двойной/тройной каскад
+- [ ] Быстрые свайпы (блокировка ввода)
+
+#### Шаг 4.2: Защита от edge cases
+- [ ] Лимит каскадов (20) с warning
+- [ ] Null checks во всех callbacks
+- [ ] Graceful degradation если компонент отсутствует
 
 ---
 
