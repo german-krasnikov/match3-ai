@@ -92,4 +92,28 @@ public class BoardInitializer : MonoBehaviour
             }
         }
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Create Test Match (Horizontal)")]
+    private void CreateTestMatchHorizontal()
+    {
+        ClearBoard();
+        _spawner.SpawnAt(0, 0, ElementType.Red);
+        _spawner.SpawnAt(1, 0, ElementType.Red);
+        _spawner.SpawnAt(2, 0, ElementType.Red);
+        Debug.Log("Created horizontal Red match at row 0");
+    }
+
+    [ContextMenu("Create Test Match (L-Shape)")]
+    private void CreateTestMatchLShape()
+    {
+        ClearBoard();
+        _spawner.SpawnAt(0, 0, ElementType.Blue);
+        _spawner.SpawnAt(1, 0, ElementType.Blue);
+        _spawner.SpawnAt(2, 0, ElementType.Blue);
+        _spawner.SpawnAt(0, 1, ElementType.Blue);
+        _spawner.SpawnAt(0, 2, ElementType.Blue);
+        Debug.Log("Created L-shape Blue match");
+    }
+#endif
 }

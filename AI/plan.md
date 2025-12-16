@@ -256,7 +256,7 @@ Assets/
 | 1 | Grid System | ✅ Готово |
 | 2 | Elements | ✅ Готово |
 | 3 | Spawn & Board Init | ✅ Готово |
-| 4 | Match Detection | ⬜ Не начат |
+| 4 | Match Detection | ✅ Готово |
 | 5 | Input & Swap | ⬜ Не начат |
 | 6 | Destruction | ⬜ Не начат |
 | 7 | Gravity & Refill | ⬜ Не начат |
