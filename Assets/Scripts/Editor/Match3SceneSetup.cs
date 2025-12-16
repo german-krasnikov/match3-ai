@@ -39,6 +39,63 @@ public static class Match3SceneSetup
         Debug.Log("Elements setup complete! Use Match3/Test Elements to spawn test elements.");
     }
 
+    [MenuItem("Match3/Setup Spawn (Stage 3)")]
+    public static void SetupSpawn()
+    {
+        var grid = Object.FindFirstObjectByType<GridComponent>();
+        var factory = Object.FindFirstObjectByType<ElementFactory>();
+
+        if (grid == null)
+        {
+            Debug.LogError("GridComponent not found. Run Match3/Setup Scene first.");
+            return;
+        }
+        if (factory == null)
+        {
+            Debug.LogError("ElementFactory not found. Run Match3/Setup Elements first.");
+            return;
+        }
+
+        var board = grid.gameObject;
+
+        // SpawnComponent
+        var spawner = board.GetComponent<SpawnComponent>();
+        if (spawner == null)
+        {
+            spawner = board.AddComponent<SpawnComponent>();
+            Undo.RegisterCreatedObjectUndo(spawner, "Add SpawnComponent");
+        }
+        SetSpawnComponentRefs(spawner, grid, factory);
+
+        // BoardInitializer
+        var initializer = board.GetComponent<BoardInitializer>();
+        if (initializer == null)
+        {
+            initializer = board.AddComponent<BoardInitializer>();
+            Undo.RegisterCreatedObjectUndo(initializer, "Add BoardInitializer");
+        }
+        SetBoardInitializerRefs(initializer, grid, spawner);
+
+        Selection.activeGameObject = board;
+        Debug.Log("Spawn setup complete! Press Play to fill the board.");
+    }
+
+    private static void SetSpawnComponentRefs(SpawnComponent spawner, GridComponent grid, ElementFactory factory)
+    {
+        var so = new SerializedObject(spawner);
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.FindProperty("_factory").objectReferenceValue = factory;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetBoardInitializerRefs(BoardInitializer initializer, GridComponent grid, SpawnComponent spawner)
+    {
+        var so = new SerializedObject(initializer);
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.FindProperty("_spawner").objectReferenceValue = spawner;
+        so.ApplyModifiedProperties();
+    }
+
     [MenuItem("Match3/Test Elements")]
     public static void TestElements()
     {
