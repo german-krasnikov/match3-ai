@@ -11,11 +11,15 @@ public class DestroyComponent : MonoBehaviour
     [SerializeField] private ElementFactory _elementFactory;
     [SerializeField] private DestroyAnimationComponent _animation;
 
-    public void DestroyMatches(List<MatchData> matches)
+    private Action _destroyCallback;
+
+    public void DestroyMatches(List<MatchData> matches, Action onComplete = null)
     {
+        _destroyCallback = onComplete;
+
         if (matches == null || matches.Count == 0)
         {
-            OnDestructionComplete?.Invoke();
+            CompleteDestruction();
             return;
         }
 
@@ -27,8 +31,15 @@ public class DestroyComponent : MonoBehaviour
         _animation.AnimateDestroyGroup(elementsToDestroy, () =>
         {
             DestroyElements(elementsToDestroy);
-            OnDestructionComplete?.Invoke();
+            CompleteDestruction();
         });
+    }
+
+    private void CompleteDestruction()
+    {
+        OnDestructionComplete?.Invoke();
+        _destroyCallback?.Invoke();
+        _destroyCallback = null;
     }
 
     private List<ElementComponent> CollectUniqueElements(List<MatchData> matches)

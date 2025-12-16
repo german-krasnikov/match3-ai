@@ -7,7 +7,6 @@ public class InputComponent : MonoBehaviour
 
     [SerializeField] private GridComponent _grid;
     [SerializeField] private SwapConfig _config;
-    [SerializeField] private SwapComponent _swap;
     [SerializeField] private Camera _camera;
 
     private Vector3 _startWorldPos;
@@ -19,24 +18,6 @@ public class InputComponent : MonoBehaviour
     private void Awake()
     {
         if (_camera == null) _camera = Camera.main;
-    }
-
-    private void OnEnable()
-    {
-        if (_swap != null)
-        {
-            _swap.OnSwapStarted += OnSwapStarted;
-            _swap.OnSwapCompleted += OnSwapCompleted;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (_swap != null)
-        {
-            _swap.OnSwapStarted -= OnSwapStarted;
-            _swap.OnSwapCompleted -= OnSwapCompleted;
-        }
     }
 
     private void Update()
@@ -79,7 +60,6 @@ public class InputComponent : MonoBehaviour
         if (targetCell == null) return;
 
         OnSwapRequested?.Invoke(_startCell, targetCell);
-        _swap?.RequestSwap(_startCell, targetCell);
     }
 
     private Vector2Int GetSwipeDirection(Vector3 delta)
@@ -95,15 +75,5 @@ public class InputComponent : MonoBehaviour
         Vector3 mousePos = Input.mousePosition;
         mousePos.z = -_camera.transform.position.z;
         return _camera.ScreenToWorldPoint(mousePos);
-    }
-
-    private void OnSwapStarted(Cell a, Cell b)
-    {
-        IsEnabled = false;
-    }
-
-    private void OnSwapCompleted(Cell a, Cell b, bool success)
-    {
-        IsEnabled = true;
     }
 }
