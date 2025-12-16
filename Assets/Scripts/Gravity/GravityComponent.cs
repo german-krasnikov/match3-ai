@@ -8,6 +8,8 @@ public class GravityComponent : MonoBehaviour
 
     [SerializeField] private GridComponent _grid;
 
+    public GridComponent Grid => _grid;
+
     public List<FallData> ProcessGravity()
     {
         var fallData = new List<FallData>();
@@ -45,4 +47,43 @@ public class GravityComponent : MonoBehaviour
             writeIndex++;
         }
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Test Gravity (delete random elements)")]
+    private void TestGravity()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("Test only works in Play mode");
+            return;
+        }
+
+        var refill = GetComponent<RefillComponent>();
+        var fallAnim = GetComponent<FallAnimationComponent>();
+
+        // Delete 3 random elements
+        for (int i = 0; i < 3; i++)
+        {
+            int x = UnityEngine.Random.Range(0, _grid.Width);
+            int y = UnityEngine.Random.Range(0, _grid.Height - 2);
+            var cell = _grid.GetCell(x, y);
+            if (cell?.Element != null)
+            {
+                Destroy(cell.Element.gameObject);
+                cell.Clear();
+            }
+        }
+
+        // Process gravity
+        var falls = ProcessGravity();
+        var refills = refill != null ? refill.SpawnNewElements() : new List<FallData>();
+
+        falls.AddRange(refills);
+
+        if (fallAnim != null)
+            fallAnim.AnimateFalls(falls, () => Debug.Log("Gravity test complete!"));
+        else
+            Debug.Log($"Gravity calculated: {falls.Count} falls");
+    }
+#endif
 }

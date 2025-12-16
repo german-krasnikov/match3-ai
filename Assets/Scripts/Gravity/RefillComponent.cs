@@ -25,37 +25,48 @@ public class RefillComponent : MonoBehaviour
 
     private void SpawnColumnElements(int x, List<FallData> fallData)
     {
-        var emptyIndices = GetEmptyIndicesFromTop(x);
-        if (emptyIndices.Count == 0) return;
+        int emptyCount = CountEmptyFromTop(x);
+        if (emptyCount == 0) return;
 
-        for (int i = 0; i < emptyIndices.Count; i++)
+        Debug.Log($"[Refill] Column {x}: {emptyCount} empty cells");
+
+        int topY = _grid.Height - 1;
+
+        for (int i = 0; i < emptyCount; i++)
         {
-            int targetY = emptyIndices[i];
-            int spawnOffset = emptyIndices.Count - i;
+            int targetY = topY - i;
+            int spawnIndex = i + 1;
+
+            Debug.Log($"[Refill] Spawning at x={x}, targetY={targetY}");
 
             var element = _spawn.SpawnRandomAt(x, targetY, useSpawnOffset: false);
+            if (element == null)
+            {
+                Debug.LogError($"[Refill] SpawnRandomAt returned null!");
+                continue;
+            }
 
-            Vector3 spawnPos = _grid.GridToWorld(x, targetY);
-            spawnPos.y += (spawnOffset + _config.SpawnHeightOffset) * _grid.Config.CellSize;
+            Vector3 spawnPos = _grid.GridToWorld(x, _grid.Height);
+            spawnPos.y += (spawnIndex - 1 + _config.SpawnHeightOffset) * _grid.Config.CellSize;
             element.transform.position = spawnPos;
 
-            int fromY = targetY + spawnOffset + Mathf.RoundToInt(_config.SpawnHeightOffset);
-            fallData.Add(new FallData(element, fromY, targetY, x, isNew: true));
+            Debug.Log($"[Refill] Element spawned at world pos {spawnPos}, will fall to y={targetY}");
+
+            int visualFromY = _grid.Height + spawnIndex - 1;
+            fallData.Add(new FallData(element, visualFromY, targetY, x, isNew: true));
         }
     }
 
-    private List<int> GetEmptyIndicesFromTop(int x)
+    private int CountEmptyFromTop(int x)
     {
-        var emptyIndices = new List<int>();
-
+        int count = 0;
         for (int y = _grid.Height - 1; y >= 0; y--)
         {
             if (_grid.GetCell(x, y).IsEmpty)
-                emptyIndices.Add(y);
+                count++;
             else
                 break;
         }
-
-        return emptyIndices;
+        return count;
     }
 }

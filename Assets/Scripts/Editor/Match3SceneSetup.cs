@@ -8,6 +8,7 @@ public static class Match3SceneSetup
     private const string ElementConfigPath = "Assets/Configs/ElementConfig.asset";
     private const string SwapConfigPath = "Assets/Configs/SwapConfig.asset";
     private const string DestroyConfigPath = "Assets/Configs/DestroyConfig.asset";
+    private const string GravityConfigPath = "Assets/Configs/GravityConfig.asset";
     private const string ElementPrefabPath = "Assets/Prefabs/Element.prefab";
     private const string ConfigFolder = "Assets/Configs";
 
@@ -137,7 +138,8 @@ public static class Match3SceneSetup
     }
 
     private static void SetSwapComponentRefs(SwapComponent swap, SwapAnimationComponent anim, GridComponent grid,
-        MatchDetectorComponent matchDetector = null, DestroyComponent destroy = null)
+        MatchDetectorComponent matchDetector = null, DestroyComponent destroy = null,
+        GravityComponent gravity = null, FallAnimationComponent fallAnim = null, RefillComponent refill = null)
     {
         var so = new SerializedObject(swap);
         so.FindProperty("_animation").objectReferenceValue = anim;
@@ -146,6 +148,12 @@ public static class Match3SceneSetup
             so.FindProperty("_matchDetector").objectReferenceValue = matchDetector;
         if (destroy != null)
             so.FindProperty("_destroy").objectReferenceValue = destroy;
+        if (gravity != null)
+            so.FindProperty("_gravity").objectReferenceValue = gravity;
+        if (fallAnim != null)
+            so.FindProperty("_fallAnimation").objectReferenceValue = fallAnim;
+        if (refill != null)
+            so.FindProperty("_refill").objectReferenceValue = refill;
         so.ApplyModifiedProperties();
     }
 
@@ -208,6 +216,107 @@ public static class Match3SceneSetup
         EditorUtility.SetDirty(board);
         Selection.activeGameObject = board;
         Debug.Log("Destruction setup complete! Swap now checks matches and destroys them.");
+    }
+
+    [MenuItem("Match3/Setup Gravity (Stage 7)")]
+    public static void SetupGravity()
+    {
+        var grid = Object.FindFirstObjectByType<GridComponent>();
+        var spawn = Object.FindFirstObjectByType<SpawnComponent>();
+
+        if (grid == null)
+        {
+            Debug.LogError("GridComponent not found. Run Match3/Setup Scene first.");
+            return;
+        }
+        if (spawn == null)
+        {
+            Debug.LogError("SpawnComponent not found. Run Match3/Setup Spawn first.");
+            return;
+        }
+
+        var board = grid.gameObject;
+        var gravityConfig = GetOrCreateGravityConfig();
+
+        // GravityComponent
+        var gravity = board.GetComponent<GravityComponent>();
+        if (gravity == null)
+        {
+            gravity = board.AddComponent<GravityComponent>();
+            Undo.RegisterCreatedObjectUndo(gravity, "Add GravityComponent");
+        }
+        SetGravityComponentRefs(gravity, grid);
+
+        // FallAnimationComponent
+        var fallAnim = board.GetComponent<FallAnimationComponent>();
+        if (fallAnim == null)
+        {
+            fallAnim = board.AddComponent<FallAnimationComponent>();
+            Undo.RegisterCreatedObjectUndo(fallAnim, "Add FallAnimationComponent");
+        }
+        SetFallAnimationRefs(fallAnim, gravityConfig, grid);
+
+        // RefillComponent
+        var refill = board.GetComponent<RefillComponent>();
+        if (refill == null)
+        {
+            refill = board.AddComponent<RefillComponent>();
+            Undo.RegisterCreatedObjectUndo(refill, "Add RefillComponent");
+        }
+        SetRefillComponentRefs(refill, grid, spawn, gravityConfig);
+
+        // Link SwapComponent to Gravity system
+        var swap = board.GetComponent<SwapComponent>();
+        if (swap != null)
+        {
+            var swapAnim = board.GetComponent<SwapAnimationComponent>();
+            var matchDetector = board.GetComponent<MatchDetectorComponent>();
+            var destroy = board.GetComponent<DestroyComponent>();
+            SetSwapComponentRefs(swap, swapAnim, grid, matchDetector, destroy, gravity, fallAnim, refill);
+        }
+
+        EditorUtility.SetDirty(board);
+        Selection.activeGameObject = board;
+        Debug.Log("Gravity setup complete! Swap now triggers gravity and refill.");
+    }
+
+    private static GravityConfig GetOrCreateGravityConfig()
+    {
+        var config = AssetDatabase.LoadAssetAtPath<GravityConfig>(GravityConfigPath);
+        if (config != null) return config;
+
+        if (!AssetDatabase.IsValidFolder(ConfigFolder))
+            AssetDatabase.CreateFolder("Assets", "Configs");
+
+        config = ScriptableObject.CreateInstance<GravityConfig>();
+        AssetDatabase.CreateAsset(config, GravityConfigPath);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Created GravityConfig at {GravityConfigPath}");
+        return config;
+    }
+
+    private static void SetGravityComponentRefs(GravityComponent gravity, GridComponent grid)
+    {
+        var so = new SerializedObject(gravity);
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetFallAnimationRefs(FallAnimationComponent anim, GravityConfig config, GridComponent grid)
+    {
+        var so = new SerializedObject(anim);
+        so.FindProperty("_config").objectReferenceValue = config;
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetRefillComponentRefs(RefillComponent refill, GridComponent grid, SpawnComponent spawn, GravityConfig config)
+    {
+        var so = new SerializedObject(refill);
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.FindProperty("_spawn").objectReferenceValue = spawn;
+        so.FindProperty("_config").objectReferenceValue = config;
+        so.ApplyModifiedProperties();
     }
 
     private static DestroyConfig GetOrCreateDestroyConfig()

@@ -11,6 +11,9 @@ public class SwapComponent : MonoBehaviour
     [SerializeField] private SwapAnimationComponent _animation;
     [SerializeField] private MatchDetectorComponent _matchDetector;
     [SerializeField] private DestroyComponent _destroy;
+    [SerializeField] private GravityComponent _gravity;
+    [SerializeField] private FallAnimationComponent _fallAnimation;
+    [SerializeField] private RefillComponent _refill;
 
     private Cell _pendingCellA;
     private Cell _pendingCellB;
@@ -107,9 +110,45 @@ public class SwapComponent : MonoBehaviour
 
     private void OnDestructionComplete()
     {
+        Debug.Log("[Swap] OnDestructionComplete called");
+
         if (_destroy != null)
             _destroy.OnDestructionComplete -= OnDestructionComplete;
 
+        Debug.Log($"[Swap] Gravity: {_gravity != null}, Refill: {_refill != null}, FallAnim: {_fallAnimation != null}");
+
+        if (_gravity == null)
+        {
+            Debug.LogWarning("[Swap] No GravityComponent - skipping gravity");
+            _isSwapping = false;
+            OnSwapCompleted?.Invoke(_pendingCellA, _pendingCellB, true);
+            return;
+        }
+
+        var falls = _gravity.ProcessGravity();
+        Debug.Log($"[Swap] Gravity falls: {falls.Count}");
+
+        if (_refill != null)
+        {
+            var refills = _refill.SpawnNewElements();
+            Debug.Log($"[Swap] Refill spawned: {refills.Count}");
+            falls.AddRange(refills);
+        }
+
+        Debug.Log($"[Swap] Total falls: {falls.Count}");
+
+        if (_fallAnimation != null && falls.Count > 0)
+        {
+            _fallAnimation.AnimateFalls(falls, OnFallComplete);
+        }
+        else
+        {
+            OnFallComplete();
+        }
+    }
+
+    private void OnFallComplete()
+    {
         _isSwapping = false;
         OnSwapCompleted?.Invoke(_pendingCellA, _pendingCellB, true);
     }
