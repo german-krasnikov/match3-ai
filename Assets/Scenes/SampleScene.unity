@@ -246,6 +246,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _animation: {fileID: 101368091}
+  _matchDetector: {fileID: 101368088}
+  _destroy: {fileID: 101368092}
   _debugGrid: {fileID: 101368084}
 --- !u!114 &101368091
 MonoBehaviour:
