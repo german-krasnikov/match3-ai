@@ -260,4 +260,4 @@ Assets/
 | 5 | Input & Swap | ✅ Готово |
 | 6 | Destruction | ✅ Готово |
 | 7 | Gravity & Refill | ✅ Готово |
-| 8 | Game Loop | ⬜ Не начат |
+| 8 | Game Loop | ✅ Готово |

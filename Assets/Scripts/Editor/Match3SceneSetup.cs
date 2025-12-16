@@ -23,6 +23,20 @@ public static class Match3SceneSetup
         Debug.Log("Match3 scene setup complete!");
     }
 
+    [MenuItem("Match3/Setup All (Stages 1-8)")]
+    public static void SetupAll()
+    {
+        SetupScene();
+        SetupElements();
+        SetupSpawn();
+        SetupMatchDetection();
+        SetupInputSwap();
+        SetupDestruction();
+        SetupGravity();
+        SetupGameLoop();
+        Debug.Log("=== Full Match3 setup complete! Press Play! ===");
+    }
+
     [MenuItem("Match3/Create GridConfig Only")]
     public static void CreateConfigOnly()
     {
@@ -107,7 +121,7 @@ public static class Match3SceneSetup
             input = board.AddComponent<InputComponent>();
             Undo.RegisterCreatedObjectUndo(input, "Add InputComponent");
         }
-        SetInputComponentRefs(input, grid, swapConfig, swap);
+        SetInputComponentRefs(input, grid, swapConfig);
 
         EditorUtility.SetDirty(board);
         Selection.activeGameObject = board;
@@ -137,32 +151,19 @@ public static class Match3SceneSetup
         so.ApplyModifiedProperties();
     }
 
-    private static void SetSwapComponentRefs(SwapComponent swap, SwapAnimationComponent anim, GridComponent grid,
-        MatchDetectorComponent matchDetector = null, DestroyComponent destroy = null,
-        GravityComponent gravity = null, FallAnimationComponent fallAnim = null, RefillComponent refill = null)
+    private static void SetSwapComponentRefs(SwapComponent swap, SwapAnimationComponent anim, GridComponent grid)
     {
         var so = new SerializedObject(swap);
         so.FindProperty("_animation").objectReferenceValue = anim;
         so.FindProperty("_debugGrid").objectReferenceValue = grid;
-        if (matchDetector != null)
-            so.FindProperty("_matchDetector").objectReferenceValue = matchDetector;
-        if (destroy != null)
-            so.FindProperty("_destroy").objectReferenceValue = destroy;
-        if (gravity != null)
-            so.FindProperty("_gravity").objectReferenceValue = gravity;
-        if (fallAnim != null)
-            so.FindProperty("_fallAnimation").objectReferenceValue = fallAnim;
-        if (refill != null)
-            so.FindProperty("_refill").objectReferenceValue = refill;
         so.ApplyModifiedProperties();
     }
 
-    private static void SetInputComponentRefs(InputComponent input, GridComponent grid, SwapConfig config, SwapComponent swap)
+    private static void SetInputComponentRefs(InputComponent input, GridComponent grid, SwapConfig config)
     {
         var so = new SerializedObject(input);
         so.FindProperty("_grid").objectReferenceValue = grid;
         so.FindProperty("_config").objectReferenceValue = config;
-        so.FindProperty("_swap").objectReferenceValue = swap;
         so.FindProperty("_camera").objectReferenceValue = Camera.main;
         so.ApplyModifiedProperties();
     }
@@ -205,17 +206,9 @@ public static class Match3SceneSetup
         }
         SetDestroyComponentRefs(destroy, grid, factory, destroyAnim);
 
-        // Link SwapComponent to MatchDetector and DestroyComponent
-        var swap = board.GetComponent<SwapComponent>();
-        var matchDetector = board.GetComponent<MatchDetectorComponent>();
-        if (swap != null)
-        {
-            SetSwapComponentRefs(swap, board.GetComponent<SwapAnimationComponent>(), grid, matchDetector, destroy);
-        }
-
         EditorUtility.SetDirty(board);
         Selection.activeGameObject = board;
-        Debug.Log("Destruction setup complete! Swap now checks matches and destroys them.");
+        Debug.Log("Destruction setup complete! Run Stage 8 to enable full game loop.");
     }
 
     [MenuItem("Match3/Setup Gravity (Stage 7)")]
@@ -265,19 +258,68 @@ public static class Match3SceneSetup
         }
         SetRefillComponentRefs(refill, grid, spawn, gravityConfig);
 
-        // Link SwapComponent to Gravity system
-        var swap = board.GetComponent<SwapComponent>();
-        if (swap != null)
+        EditorUtility.SetDirty(board);
+        Selection.activeGameObject = board;
+        Debug.Log("Gravity setup complete! Run Stage 8 to enable full game loop.");
+    }
+
+    [MenuItem("Match3/Setup Game Loop (Stage 8)")]
+    public static void SetupGameLoop()
+    {
+        var grid = Object.FindFirstObjectByType<GridComponent>();
+        if (grid == null)
         {
-            var swapAnim = board.GetComponent<SwapAnimationComponent>();
-            var matchDetector = board.GetComponent<MatchDetectorComponent>();
-            var destroy = board.GetComponent<DestroyComponent>();
-            SetSwapComponentRefs(swap, swapAnim, grid, matchDetector, destroy, gravity, fallAnim, refill);
+            Debug.LogError("GridComponent not found. Run Match3/Setup Scene first.");
+            return;
         }
+
+        var board = grid.gameObject;
+
+        // Get all required components
+        var input = board.GetComponent<InputComponent>();
+        var swap = board.GetComponent<SwapComponent>();
+        var swapAnim = board.GetComponent<SwapAnimationComponent>();
+        var matchDetector = board.GetComponent<MatchDetectorComponent>();
+        var destroy = board.GetComponent<DestroyComponent>();
+        var gravity = board.GetComponent<GravityComponent>();
+        var refill = board.GetComponent<RefillComponent>();
+        var fallAnim = board.GetComponent<FallAnimationComponent>();
+
+        if (input == null || swap == null || matchDetector == null || destroy == null || gravity == null)
+        {
+            Debug.LogError("Missing components. Run Stage 1-7 first.");
+            return;
+        }
+
+        // GameLoopController
+        var gameLoop = board.GetComponent<GameLoopController>();
+        if (gameLoop == null)
+        {
+            gameLoop = board.AddComponent<GameLoopController>();
+            Undo.RegisterCreatedObjectUndo(gameLoop, "Add GameLoopController");
+        }
+        SetGameLoopRefs(gameLoop, input, swap, swapAnim, matchDetector, destroy, gravity, refill, fallAnim);
 
         EditorUtility.SetDirty(board);
         Selection.activeGameObject = board;
-        Debug.Log("Gravity setup complete! Swap now triggers gravity and refill.");
+        Debug.Log("Game Loop setup complete! Full Match3 game ready. Press Play!");
+    }
+
+    private static void SetGameLoopRefs(GameLoopController gameLoop,
+        InputComponent input, SwapComponent swap, SwapAnimationComponent swapAnim,
+        MatchDetectorComponent matchDetector, DestroyComponent destroy,
+        GravityComponent gravity, RefillComponent refill, FallAnimationComponent fallAnim)
+    {
+        var so = new SerializedObject(gameLoop);
+        so.FindProperty("_input").objectReferenceValue = input;
+        so.FindProperty("_swap").objectReferenceValue = swap;
+        so.FindProperty("_swapAnimation").objectReferenceValue = swapAnim;
+        so.FindProperty("_matchDetector").objectReferenceValue = matchDetector;
+        so.FindProperty("_destroy").objectReferenceValue = destroy;
+        so.FindProperty("_gravity").objectReferenceValue = gravity;
+        so.FindProperty("_refill").objectReferenceValue = refill;
+        so.FindProperty("_fallAnimation").objectReferenceValue = fallAnim;
+        so.ApplyModifiedProperties();
     }
 
     private static GravityConfig GetOrCreateGravityConfig()
