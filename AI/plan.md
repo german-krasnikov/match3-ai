@@ -254,8 +254,8 @@ Assets/
 | Этап | Название | Статус |
 |------|----------|--------|
 | 1 | Grid System | ✅ Готово |
-| 2 | Elements | ⬜ Не начат |
-| 3 | Spawn & Board Init | ⬜ Не начат |
+| 2 | Elements | ✅ Готово |
+| 3 | Spawn & Board Init | ✅ Готово |
 | 4 | Match Detection | ⬜ Не начат |
 | 5 | Input & Swap | ⬜ Не начат |
 | 6 | Destruction | ⬜ Не начат |
