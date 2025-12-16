@@ -259,5 +259,5 @@ Assets/
 | 4 | Match Detection | ✅ Готово |
 | 5 | Input & Swap | ✅ Готово |
 | 6 | Destruction | ✅ Готово |
-| 7 | Gravity & Refill | ⬜ Не начат |
+| 7 | Gravity & Refill | ✅ Готово |
 | 8 | Game Loop | ⬜ Не начат |
