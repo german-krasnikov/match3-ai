@@ -39,6 +39,33 @@ public static class Match3SceneSetup
         Debug.Log("Elements setup complete! Use Match3/Test Elements to spawn test elements.");
     }
 
+    [MenuItem("Match3/Setup Match Detection (Stage 4)")]
+    public static void SetupMatchDetection()
+    {
+        var grid = Object.FindFirstObjectByType<GridComponent>();
+        if (grid == null)
+        {
+            Debug.LogError("GridComponent not found. Run Match3/Setup Scene first.");
+            return;
+        }
+
+        var board = grid.gameObject;
+
+        var detector = board.GetComponent<MatchDetectorComponent>();
+        if (detector == null)
+        {
+            detector = board.AddComponent<MatchDetectorComponent>();
+            Undo.RegisterCreatedObjectUndo(detector, "Add MatchDetectorComponent");
+        }
+
+        var so = new SerializedObject(detector);
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.ApplyModifiedProperties();
+
+        Selection.activeGameObject = board;
+        Debug.Log("Match Detection setup complete! Use ContextMenu on MatchDetectorComponent to test.");
+    }
+
     [MenuItem("Match3/Setup Spawn (Stage 3)")]
     public static void SetupSpawn()
     {
