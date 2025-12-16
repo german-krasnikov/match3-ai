@@ -7,6 +7,7 @@ public static class Match3SceneSetup
     private const string ConfigPath = "Assets/Configs/GridConfig.asset";
     private const string ElementConfigPath = "Assets/Configs/ElementConfig.asset";
     private const string SwapConfigPath = "Assets/Configs/SwapConfig.asset";
+    private const string DestroyConfigPath = "Assets/Configs/DestroyConfig.asset";
     private const string ElementPrefabPath = "Assets/Prefabs/Element.prefab";
     private const string ConfigFolder = "Assets/Configs";
 
@@ -135,11 +136,16 @@ public static class Match3SceneSetup
         so.ApplyModifiedProperties();
     }
 
-    private static void SetSwapComponentRefs(SwapComponent swap, SwapAnimationComponent anim, GridComponent grid)
+    private static void SetSwapComponentRefs(SwapComponent swap, SwapAnimationComponent anim, GridComponent grid,
+        MatchDetectorComponent matchDetector = null, DestroyComponent destroy = null)
     {
         var so = new SerializedObject(swap);
         so.FindProperty("_animation").objectReferenceValue = anim;
         so.FindProperty("_debugGrid").objectReferenceValue = grid;
+        if (matchDetector != null)
+            so.FindProperty("_matchDetector").objectReferenceValue = matchDetector;
+        if (destroy != null)
+            so.FindProperty("_destroy").objectReferenceValue = destroy;
         so.ApplyModifiedProperties();
     }
 
@@ -150,6 +156,88 @@ public static class Match3SceneSetup
         so.FindProperty("_config").objectReferenceValue = config;
         so.FindProperty("_swap").objectReferenceValue = swap;
         so.FindProperty("_camera").objectReferenceValue = Camera.main;
+        so.ApplyModifiedProperties();
+    }
+
+    [MenuItem("Match3/Setup Destruction (Stage 6)")]
+    public static void SetupDestruction()
+    {
+        var grid = Object.FindFirstObjectByType<GridComponent>();
+        var factory = Object.FindFirstObjectByType<ElementFactory>();
+
+        if (grid == null)
+        {
+            Debug.LogError("GridComponent not found. Run Match3/Setup Scene first.");
+            return;
+        }
+        if (factory == null)
+        {
+            Debug.LogError("ElementFactory not found. Run Match3/Setup Elements first.");
+            return;
+        }
+
+        var board = grid.gameObject;
+        var destroyConfig = GetOrCreateDestroyConfig();
+
+        // DestroyAnimationComponent
+        var destroyAnim = board.GetComponent<DestroyAnimationComponent>();
+        if (destroyAnim == null)
+        {
+            destroyAnim = board.AddComponent<DestroyAnimationComponent>();
+            Undo.RegisterCreatedObjectUndo(destroyAnim, "Add DestroyAnimationComponent");
+        }
+        SetDestroyAnimationRefs(destroyAnim, destroyConfig);
+
+        // DestroyComponent
+        var destroy = board.GetComponent<DestroyComponent>();
+        if (destroy == null)
+        {
+            destroy = board.AddComponent<DestroyComponent>();
+            Undo.RegisterCreatedObjectUndo(destroy, "Add DestroyComponent");
+        }
+        SetDestroyComponentRefs(destroy, grid, factory, destroyAnim);
+
+        // Link SwapComponent to MatchDetector and DestroyComponent
+        var swap = board.GetComponent<SwapComponent>();
+        var matchDetector = board.GetComponent<MatchDetectorComponent>();
+        if (swap != null)
+        {
+            SetSwapComponentRefs(swap, board.GetComponent<SwapAnimationComponent>(), grid, matchDetector, destroy);
+        }
+
+        EditorUtility.SetDirty(board);
+        Selection.activeGameObject = board;
+        Debug.Log("Destruction setup complete! Swap now checks matches and destroys them.");
+    }
+
+    private static DestroyConfig GetOrCreateDestroyConfig()
+    {
+        var config = AssetDatabase.LoadAssetAtPath<DestroyConfig>(DestroyConfigPath);
+        if (config != null) return config;
+
+        if (!AssetDatabase.IsValidFolder(ConfigFolder))
+            AssetDatabase.CreateFolder("Assets", "Configs");
+
+        config = ScriptableObject.CreateInstance<DestroyConfig>();
+        AssetDatabase.CreateAsset(config, DestroyConfigPath);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Created DestroyConfig at {DestroyConfigPath}");
+        return config;
+    }
+
+    private static void SetDestroyAnimationRefs(DestroyAnimationComponent anim, DestroyConfig config)
+    {
+        var so = new SerializedObject(anim);
+        so.FindProperty("_config").objectReferenceValue = config;
+        so.ApplyModifiedProperties();
+    }
+
+    private static void SetDestroyComponentRefs(DestroyComponent destroy, GridComponent grid, ElementFactory factory, DestroyAnimationComponent anim)
+    {
+        var so = new SerializedObject(destroy);
+        so.FindProperty("_grid").objectReferenceValue = grid;
+        so.FindProperty("_elementFactory").objectReferenceValue = factory;
+        so.FindProperty("_animation").objectReferenceValue = anim;
         so.ApplyModifiedProperties();
     }
 

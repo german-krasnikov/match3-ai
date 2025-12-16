@@ -1,12 +1,16 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SwapComponent : MonoBehaviour
 {
     public event Action<Cell, Cell> OnSwapStarted;
     public event Action<Cell, Cell, bool> OnSwapCompleted;
+    public event Action<List<MatchData>> OnMatchesFound;
 
     [SerializeField] private SwapAnimationComponent _animation;
+    [SerializeField] private MatchDetectorComponent _matchDetector;
+    [SerializeField] private DestroyComponent _destroy;
 
     private Cell _pendingCellA;
     private Cell _pendingCellB;
@@ -37,9 +41,6 @@ public class SwapComponent : MonoBehaviour
 
     public void SwapBack(Cell a, Cell b)
     {
-        if (_isSwapping) return;
-
-        _isSwapping = true;
         _pendingCellA = a;
         _pendingCellB = b;
 
@@ -73,6 +74,42 @@ public class SwapComponent : MonoBehaviour
 
     private void OnSwapAnimationComplete()
     {
+        if (_matchDetector == null)
+        {
+            _isSwapping = false;
+            OnSwapCompleted?.Invoke(_pendingCellA, _pendingCellB, true);
+            return;
+        }
+
+        var matches = _matchDetector.FindMatches();
+
+        if (matches.Count > 0)
+        {
+            OnMatchesFound?.Invoke(matches);
+
+            if (_destroy != null)
+            {
+                _destroy.OnDestructionComplete += OnDestructionComplete;
+                _destroy.DestroyMatches(matches);
+            }
+            else
+            {
+                _isSwapping = false;
+                OnSwapCompleted?.Invoke(_pendingCellA, _pendingCellB, true);
+            }
+        }
+        else
+        {
+            // No match - swap back
+            SwapBack(_pendingCellA, _pendingCellB);
+        }
+    }
+
+    private void OnDestructionComplete()
+    {
+        if (_destroy != null)
+            _destroy.OnDestructionComplete -= OnDestructionComplete;
+
         _isSwapping = false;
         OnSwapCompleted?.Invoke(_pendingCellA, _pendingCellB, true);
     }
@@ -80,6 +117,7 @@ public class SwapComponent : MonoBehaviour
     private void OnSwapBackComplete()
     {
         _isSwapping = false;
+        OnSwapCompleted?.Invoke(_pendingCellA, _pendingCellB, false);
     }
 
 #if UNITY_EDITOR

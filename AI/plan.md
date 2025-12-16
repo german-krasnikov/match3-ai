@@ -257,7 +257,7 @@ Assets/
 | 2 | Elements | ✅ Готово |
 | 3 | Spawn & Board Init | ✅ Готово |
 | 4 | Match Detection | ✅ Готово |
-| 5 | Input & Swap | ⬜ Не начат |
+| 5 | Input & Swap | ✅ Готово |
 | 6 | Destruction | ⬜ Не начат |
 | 7 | Gravity & Refill | ⬜ Не начат |
 | 8 | Game Loop | ⬜ Не начат |
