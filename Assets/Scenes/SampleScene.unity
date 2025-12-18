@@ -143,6 +143,7 @@ GameObject:
   - component: {fileID: 101368096}
   - component: {fileID: 101368095}
   - component: {fileID: 101368094}
+  - component: {fileID: 101368097}
   m_Layer: 0
   m_Name: Board
   m_TagString: Untagged
@@ -234,7 +235,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grid: {fileID: 101368084}
   _config: {fileID: 11400000, guid: bd765f8b643b94e71b721437a0bf7197, type: 2}
-  _swap: {fileID: 101368090}
   _camera: {fileID: 519420031}
 --- !u!114 &101368090
 MonoBehaviour:
@@ -249,8 +249,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _animation: {fileID: 101368091}
-  _matchDetector: {fileID: 101368088}
-  _destroy: {fileID: 101368092}
   _debugGrid: {fileID: 101368084}
 --- !u!114 &101368091
 MonoBehaviour:
@@ -336,6 +334,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _grid: {fileID: 101368084}
+--- !u!114 &101368097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101368083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2516e9b4d1d74b95a42a76f96e1c072, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _input: {fileID: 101368089}
+  _swap: {fileID: 101368090}
+  _swapAnimation: {fileID: 101368091}
+  _matchDetector: {fileID: 101368088}
+  _destroy: {fileID: 101368092}
+  _gravity: {fileID: 101368096}
+  _refill: {fileID: 101368094}
+  _fallAnimation: {fileID: 101368095}
+  _maxCascadeCount: 20
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
