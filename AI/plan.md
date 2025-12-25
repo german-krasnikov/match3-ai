@@ -324,17 +324,17 @@
 
 ---
 
-## Этап 10: Refill System (Заполнение сверху)
+## Этап 10: Refill System (Заполнение сверху) ✅
 
 ### 10.1 RefillCalculator
-- [ ] `RefillCalculator` - определение новых элементов
+- [x] `RefillCalculator` - определение новых элементов
   - `List<RefillData> CalculateRefills(BoardComponent board, GridComponent grid)`
   - Для каждой пустой позиции:
     - Вычислить spawn позицию выше сетки
     - Создать RefillData
 
 ### 10.2 RefillData
-- [ ] `RefillData` - readonly struct
+- [x] `RefillData` - readonly struct
   - `Vector2Int TargetPosition`
   - `Vector2Int SpawnPosition`
   - `Vector3 SpawnWorldPosition`
@@ -342,7 +342,7 @@
   - `int FallDistance`
 
 ### 10.3 RefillHandler
-- [ ] `RefillHandler : MonoBehaviour`
+- [x] `RefillHandler : MonoBehaviour`
   - `[SerializeField] ElementFactory _factory`
   - `[SerializeField] RefillAnimator _animator`
   - `void ExecuteRefills()`
@@ -350,14 +350,14 @@
   - `event Action OnRefillsCompleted`
 
 ### 10.4 RefillAnimator
-- [ ] `RefillAnimator : MonoBehaviour` - анимация появления и падения
+- [x] `RefillAnimator : MonoBehaviour` - анимация появления и падения
   - Spawn scale effect (0.5 → 1.0)
   - Fall с InQuad easing
   - Bounce при приземлении
 
 ### 10.5 Интеграция в SwapHandler
-- [ ] `FallHandler.OnFallsCompleted` → `RefillHandler.ExecuteRefills()`
-- [ ] `RefillHandler.OnRefillsCompleted` → cascade check (Stage 11)
+- [x] `FallHandler.OnFallsCompleted` → `RefillHandler.ExecuteRefills()`
+- [x] `RefillHandler.OnRefillsCompleted` → cascade check (Stage 11)
 
 **Файлы:**
 - `Assets/Scripts/Refill/RefillCalculator.cs`

@@ -7,6 +7,7 @@ using Match3.Elements;
 using Match3.Matching;
 using Match3.Destroy;
 using Match3.Fall;
+using Match3.Refill;
 
 namespace Match3.Swap
 {
@@ -28,6 +29,7 @@ namespace Match3.Swap
         [SerializeField] private MatchFinder _matchFinder;
         [SerializeField] private DestroyHandler _destroyHandler;
         [SerializeField] private FallHandler _fallHandler;
+        [SerializeField] private RefillHandler _refillHandler;
 
         private bool _isProcessing;
 
@@ -36,6 +38,7 @@ namespace Match3.Swap
             _inputDetector.OnSwapRequested += HandleSwapRequest;
             _destroyHandler.OnDestroyCompleted += OnDestroyCompleted;
             _fallHandler.OnFallsCompleted += OnFallsCompleted;
+            _refillHandler.OnRefillsCompleted += OnRefillsCompleted;
         }
 
         private void OnDisable()
@@ -43,6 +46,7 @@ namespace Match3.Swap
             _inputDetector.OnSwapRequested -= HandleSwapRequest;
             _destroyHandler.OnDestroyCompleted -= OnDestroyCompleted;
             _fallHandler.OnFallsCompleted -= OnFallsCompleted;
+            _refillHandler.OnRefillsCompleted -= OnRefillsCompleted;
         }
 
         public void RequestSwap(Vector2Int posA, Vector2Int posB)
@@ -140,7 +144,12 @@ namespace Match3.Swap
 
         private void OnFallsCompleted()
         {
-            // TODO: Stage 10 - RefillHandler will be called here
+            _refillHandler.ExecuteRefills();
+        }
+
+        private void OnRefillsCompleted()
+        {
+            // TODO: Stage 11 - Check for cascade matches here
             FinishSwap();
         }
 

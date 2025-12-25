@@ -1,6 +1,6 @@
 # Этап 10: Refill System - Детальный План Реализации
 
-## Статус: В РАБОТЕ 🔄
+## Статус: ЗАВЕРШЁН ✅
 
 ---
 
@@ -237,8 +237,8 @@ namespace Match3.Refill
             _refillsBuffer.Clear();
             _columnCounters.Clear();
 
-            // Scan from top to bottom (spawn order matters for stagger)
-            for (int y = board.Height - 1; y >= 0; y--)
+            // Scan bottom to top - lower positions fill first (natural falling)
+            for (int y = 0; y < board.Height; y++)
             {
                 for (int x = 0; x < board.Width; x++)
                 {
@@ -476,7 +476,8 @@ namespace Match3.Refill
         [SerializeField] private float _bounceDuration = 0.15f;
 
         [Header("Spawn Effect")]
-        [SerializeField] private float _spawnScale = 0.5f;
+        [SerializeField] private Vector3 _targetScale = new(5.5f, 5.5f, 1f);
+        [SerializeField] private float _spawnScaleMultiplier = 0.5f;
         [SerializeField] private float _scaleUpDuration = 0.1f;
 
         private Sequence _currentSequence;
@@ -533,8 +534,8 @@ namespace Match3.Refill
         {
             var transform = element.transform;
 
-            // Start with smaller scale
-            transform.localScale = Vector3.one * _spawnScale;
+            // Start with smaller scale (uses prefab target scale)
+            transform.localScale = _targetScale * _spawnScaleMultiplier;
 
             // Calculate duration based on distance
             float duration = refill.FallDistance / _fallSpeed;
@@ -542,8 +543,8 @@ namespace Match3.Refill
 
             var seq = DOTween.Sequence();
 
-            // Scale up as it spawns
-            seq.Append(transform.DOScale(Vector3.one, _scaleUpDuration).SetEase(Ease.OutBack));
+            // Scale up to target scale as it spawns
+            seq.Append(transform.DOScale(_targetScale, _scaleUpDuration).SetEase(Ease.OutBack));
 
             // Fall movement
             seq.Join(transform.DOMove(refill.TargetWorldPosition, duration).SetEase(_fallEase));
@@ -584,7 +585,8 @@ namespace Match3.Refill
 | `_fallEase` | InQuad | Easing падения |
 | `_bounceStrength` | 0.15f | Сила bounce |
 | `_bounceDuration` | 0.15f | Длительность bounce |
-| `_spawnScale` | 0.5f | Начальный масштаб (эффект появления) |
+| `_targetScale` | (5.5, 5.5, 1) | Целевой масштаб (из префаба Element) |
+| `_spawnScaleMultiplier` | 0.5f | Множитель начального масштаба |
 | `_scaleUpDuration` | 0.1f | Время масштабирования |
 
 ### Timeline
@@ -1096,17 +1098,17 @@ private void DebugCalculateRefills()
 ## Чеклист
 
 ### Код
-- [ ] Создать папку `Assets/Scripts/Refill/`
-- [ ] `RefillData.cs` — readonly struct
-- [ ] `RefillCalculator.cs` — статический класс расчёта
-- [ ] `RefillAnimator.cs` — DOTween анимации
-- [ ] `RefillHandler.cs` — координация
-- [ ] `RefillSystemSetup.cs` — Editor menu
+- [x] Создать папку `Assets/Scripts/Refill/`
+- [x] `RefillData.cs` — readonly struct
+- [x] `RefillCalculator.cs` — статический класс расчёта
+- [x] `RefillAnimator.cs` — DOTween анимации
+- [x] `RefillHandler.cs` — координация
+- [x] `RefillSystemSetup.cs` — Editor menu
 
 ### Интеграция
-- [ ] SwapHandler получает ссылку на RefillHandler
-- [ ] FallHandler.OnFallsCompleted → RefillHandler.ExecuteRefills
-- [ ] RefillHandler.OnRefillsCompleted → SwapHandler.OnRefillsCompleted
+- [x] SwapHandler получает ссылку на RefillHandler
+- [x] FallHandler.OnFallsCompleted → RefillHandler.ExecuteRefills
+- [x] RefillHandler.OnRefillsCompleted → SwapHandler.OnRefillsCompleted
 
 ### Тестирование в Unity
 - [ ] Меню `Match3 → Setup Scene → Stage 10 - Refill System` работает
@@ -1131,13 +1133,13 @@ A: Переиспользование пула (ElementPool). Элементы �
 
 A: Чистая функция без состояния (кроме буферов). Проще тестировать, нет lifecycle issues.
 
-### Q: Почему scan top-to-bottom?
+### Q: Почему scan bottom-to-top?
 
-A: Для правильного stagger эффекта. Верхние элементы падают дольше, нужно стартовать их первыми.
+A: Естественный порядок заполнения. Нижние позиции заполняются первыми — элементы падают и приземляются раньше, затем следующие.
 
-### Q: Почему spawn scale начинается с 0.5?
+### Q: Почему spawn scale использует _targetScale?
 
-A: Визуальный эффект "появления из ниоткуда". Элемент не просто падает — он материализуется.
+A: Префаб Element имеет scale (5.5, 5.5, 1). RefillAnimator использует `_targetScale * _spawnScaleMultiplier` для начального размера и анимирует до `_targetScale`. Это обеспечивает корректный финальный размер независимо от настроек префаба.
 
 ### Q: Что если после refill образовался матч?
 
