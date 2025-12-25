@@ -152,29 +152,37 @@
 
 ---
 
-## Этап 5: Input System (Ввод)
+## Этап 5: Input System (Ввод) ✅
 
 ### 5.1 InputDetector
-- [ ] `InputDetector : MonoBehaviour` - обработка ввода
+- [x] `InputDetector : MonoBehaviour` - обработка ввода
   - Raycast для определения тайла под курсором/тачем
   - `event Action<Vector2Int> OnElementSelected`
   - `event Action<Vector2Int, Vector2Int> OnSwapRequested`
 
 ### 5.2 Логика свайпа
-- [ ] Определение направления свайпа
+- [x] Определение направления свайпа
   - Первый клик → сохранить позицию
   - Драг/второй клик → определить направление
   - Валидация: только соседние ячейки (4 направления)
 
 ### 5.3 InputBlocker
-- [ ] `InputBlocker` - блокировка ввода во время анимаций
+- [x] `InputBlocker` - блокировка ввода во время анимаций
   - `bool IsBlocked { get; set; }`
   - Проверка перед обработкой ввода
+
+### 5.4 SelectionHighlighter
+- [x] `SelectionHighlighter` - визуальная подсветка выбранного элемента
+  - Пульсирующая анимация через DOTween
 
 **Файлы:**
 - `Assets/Scripts/Input/InputDetector.cs`
 - `Assets/Scripts/Input/SwipeDirection.cs`
 - `Assets/Scripts/Input/InputBlocker.cs`
+- `Assets/Scripts/Input/SelectionHighlighter.cs`
+- `Assets/Scripts/Editor/InputSystemSetup.cs`
+
+**Детальный план:** `AI/plan_stage5_input.md`
 
 ---
 
