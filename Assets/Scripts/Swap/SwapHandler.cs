@@ -6,6 +6,7 @@ using Match3.Input;
 using Match3.Elements;
 using Match3.Matching;
 using Match3.Destroy;
+using Match3.Fall;
 
 namespace Match3.Swap
 {
@@ -26,6 +27,7 @@ namespace Match3.Swap
         [SerializeField] private SwapAnimator _swapAnimator;
         [SerializeField] private MatchFinder _matchFinder;
         [SerializeField] private DestroyHandler _destroyHandler;
+        [SerializeField] private FallHandler _fallHandler;
 
         private bool _isProcessing;
 
@@ -33,12 +35,14 @@ namespace Match3.Swap
         {
             _inputDetector.OnSwapRequested += HandleSwapRequest;
             _destroyHandler.OnDestroyCompleted += OnDestroyCompleted;
+            _fallHandler.OnFallsCompleted += OnFallsCompleted;
         }
 
         private void OnDisable()
         {
             _inputDetector.OnSwapRequested -= HandleSwapRequest;
             _destroyHandler.OnDestroyCompleted -= OnDestroyCompleted;
+            _fallHandler.OnFallsCompleted -= OnFallsCompleted;
         }
 
         public void RequestSwap(Vector2Int posA, Vector2Int posB)
@@ -131,6 +135,12 @@ namespace Match3.Swap
 
         private void OnDestroyCompleted(int count)
         {
+            _fallHandler.ExecuteFalls();
+        }
+
+        private void OnFallsCompleted()
+        {
+            // TODO: Stage 10 - RefillHandler will be called here
             FinishSwap();
         }
 
