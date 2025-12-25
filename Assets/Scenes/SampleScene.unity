@@ -529,6 +529,8 @@ GameObject:
   - component: {fileID: 1609082431}
   - component: {fileID: 1609082430}
   - component: {fileID: 1609082429}
+  - component: {fileID: 1609082433}
+  - component: {fileID: 1609082432}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -622,6 +624,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b0fef892740444559d65f5208cc3e51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1609082432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35d9301793b384bed920b773810f3c94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _board: {fileID: 1609082428}
+  _grid: {fileID: 1609082426}
+  _inputDetector: {fileID: 1609082430}
+  _inputBlocker: {fileID: 1609082431}
+  _swapAnimator: {fileID: 1609082433}
+--- !u!114 &1609082433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21e379b2552014348a75d888b1a80c71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _swapDuration: 0.25
+  _swapEase: 27
+  _overshoot: 1.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
