@@ -370,35 +370,41 @@
 
 ---
 
-## Этап 11: Game Loop (Игровой цикл)
+## Этап 11: Game Loop (Игровой цикл) ✅
 
 ### 11.1 GameLoopController
-- [ ] `GameLoopController : MonoBehaviour` - State Machine
-  - States: `Idle`, `Swapping`, `Matching`, `Destroying`, `Falling`, `Refilling`
+- [x] `GameLoopController : MonoBehaviour` - координатор игрового цикла
+  - Подписывается на события SwapHandler, DestroyHandler, FallHandler, RefillHandler
+  - Управляет state machine и cascade логикой
   - `event Action<GameState> OnStateChanged`
+  - `event Action OnCascadeStarted`
+  - `event Action<int, int> OnCascadeCompleted` (totalDestroyed, cascadeLevel)
 
-### 11.2 Цикл обработки
-```
-Idle → [Swap Input] → Swapping
-Swapping → [Swap Complete] → Matching
-Matching → [Matches Found] → Destroying → Falling → Refilling → Matching
-Matching → [No Matches] → Idle
-```
+### 11.2 GameState
+- [x] `GameState` - enum состояний
+  - `Idle`, `Swapping`, `Matching`, `Destroying`, `Falling`, `Refilling`, `CheckingCascade`, `Shuffling`
 
-### 11.3 Cascade Handler
-- [ ] Повторный цикл проверки после заполнения
-  - Пока есть матчи → уничтожить → падение → заполнение → проверка
+### 11.3 DeadlockChecker
+- [x] `DeadlockChecker` - статический класс проверки возможных ходов
+  - `bool HasPossibleMoves(BoardComponent, MatchFinder)`
+  - `int CountPossibleMoves(...)` - для подсказок
 
-### 11.4 DeadlockChecker
-- [ ] `DeadlockChecker` - проверка возможных ходов
-  - `bool HasPossibleMoves(BoardComponent board)`
-  - Если нет ходов → перемешать доску
+### 11.4 BoardShuffler
+- [x] `BoardShuffler : MonoBehaviour` - перемешивание при deadlock
+  - Fisher-Yates shuffle + DOTween анимация
+
+### 11.5 SwapHandler (упрощён)
+- [x] Только swap логика, без cascade/deadlock
+  - События: `OnSwapStarted`, `OnSwapCompleted`, `OnSwapReverted`
 
 **Файлы:**
 - `Assets/Scripts/GameLoop/GameLoopController.cs`
 - `Assets/Scripts/GameLoop/GameState.cs`
-- `Assets/Scripts/GameLoop/CascadeHandler.cs`
 - `Assets/Scripts/GameLoop/DeadlockChecker.cs`
+- `Assets/Scripts/GameLoop/BoardShuffler.cs`
+- `Assets/Scripts/Editor/GameLoopSetup.cs`
+
+**Детальный план:** `AI/plan_stage11_gameloop.md`
 
 ---
 
