@@ -122,23 +122,33 @@
 
 ---
 
-## Этап 4: Board State (Состояние доски)
+## Этап 4: Board State (Состояние доски) ✅
 
 ### 4.1 BoardComponent
-- [ ] `BoardComponent : MonoBehaviour` - хранит состояние
+- [x] `BoardComponent : MonoBehaviour` - хранит состояние
   - `ElementComponent[,] _elements` - элементы на сетке
   - `ElementComponent GetElement(Vector2Int pos)`
   - `void SetElement(Vector2Int pos, ElementComponent element)`
-  - `void RemoveElement(Vector2Int pos)`
+  - `ElementComponent RemoveElement(Vector2Int pos)` - возвращает для пулинга
   - `bool IsEmpty(Vector2Int pos)`
   - `List<Vector2Int> GetEmptyPositions()`
+  - `List<int> GetEmptyRowsInColumn(int)` - для Fall System
+  - `ElementType? GetElementType(Vector2Int)` - для MatchFinder
+  - `void SwapElements(Vector2Int, Vector2Int)` - для Swap System
+  - События: OnElementSet, OnElementRemoved
 
 ### 4.2 Интеграция с Grid
-- [ ] BoardComponent зависит от GridComponent
+- [x] BoardComponent зависит от GridComponent
   - Инициализация массива по размерам сетки
+- [x] InitialBoardSpawner интегрирован с BoardComponent
 
 **Файлы:**
 - `Assets/Scripts/Board/BoardComponent.cs`
+- `Assets/Scripts/Editor/BoardSystemSetup.cs`
+
+**Editor Setup:** `Match3 → Setup Scene → Stage 4 - Board System`
+
+**Детальный план:** `AI/plan_stage4_board.md`
 
 ---
 
