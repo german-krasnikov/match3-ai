@@ -526,6 +526,9 @@ GameObject:
   - component: {fileID: 1609082427}
   - component: {fileID: 1609082426}
   - component: {fileID: 1609082428}
+  - component: {fileID: 1609082431}
+  - component: {fileID: 1609082430}
+  - component: {fileID: 1609082429}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -574,6 +577,51 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _grid: {fileID: 1609082426}
+--- !u!114 &1609082429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9050a130f195b447eb7c56c6dba00379, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _inputDetector: {fileID: 1609082430}
+  _board: {fileID: 1609082428}
+  _pulseScale: 1.15
+  _pulseDuration: 0.3
+--- !u!114 &1609082430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9900cea01de4f407b8b333c4d57e6d71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _swipeThreshold: 0.5
+  _camera: {fileID: 519420031}
+  _grid: {fileID: 1609082426}
+  _board: {fileID: 1609082428}
+  _inputBlocker: {fileID: 1609082431}
+--- !u!114 &1609082431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b0fef892740444559d65f5208cc3e51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
