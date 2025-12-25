@@ -5,6 +5,7 @@ using Match3.Grid;
 using Match3.Input;
 using Match3.Elements;
 using Match3.Matching;
+using Match3.Destroy;
 
 namespace Match3.Swap
 {
@@ -24,17 +25,20 @@ namespace Match3.Swap
         [SerializeField] private InputBlocker _inputBlocker;
         [SerializeField] private SwapAnimator _swapAnimator;
         [SerializeField] private MatchFinder _matchFinder;
+        [SerializeField] private DestroyHandler _destroyHandler;
 
         private bool _isProcessing;
 
         private void OnEnable()
         {
             _inputDetector.OnSwapRequested += HandleSwapRequest;
+            _destroyHandler.OnDestroyCompleted += OnDestroyCompleted;
         }
 
         private void OnDisable()
         {
             _inputDetector.OnSwapRequested -= HandleSwapRequest;
+            _destroyHandler.OnDestroyCompleted -= OnDestroyCompleted;
         }
 
         public void RequestSwap(Vector2Int posA, Vector2Int posB)
@@ -113,6 +117,20 @@ namespace Match3.Swap
         private void CompleteSwap(Vector2Int posA, Vector2Int posB)
         {
             OnSwapCompleted?.Invoke(posA, posB);
+
+            var matches = _matchFinder.FindAllMatches();
+            if (matches.Count > 0)
+            {
+                _destroyHandler.DestroyMatches(matches);
+            }
+            else
+            {
+                FinishSwap();
+            }
+        }
+
+        private void OnDestroyCompleted(int count)
+        {
             FinishSwap();
         }
 

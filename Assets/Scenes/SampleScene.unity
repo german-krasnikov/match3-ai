@@ -533,6 +533,8 @@ GameObject:
   - component: {fileID: 1609082432}
   - component: {fileID: 1609082435}
   - component: {fileID: 1609082434}
+  - component: {fileID: 1609082437}
+  - component: {fileID: 1609082436}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -644,6 +646,7 @@ MonoBehaviour:
   _inputBlocker: {fileID: 1609082431}
   _swapAnimator: {fileID: 1609082433}
   _matchFinder: {fileID: 1609082435}
+  _destroyHandler: {fileID: 1609082436}
 --- !u!114 &1609082433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -692,6 +695,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _minMatchLength: 3
   _board: {fileID: 1609082428}
+--- !u!114 &1609082436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cb8fc1ff56594bb7b3be502e57edc70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _board: {fileID: 1609082428}
+  _factory: {fileID: 836795260}
+  _animator: {fileID: 1609082437}
+--- !u!114 &1609082437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74da0fe8c02504060b98bb9f838ea9dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _punchDuration: 0.1
+  _shrinkDuration: 0.2
+  _staggerDelay: 0.02
+  _punchScale: 1.2
+  _shrinkEase: 26
+  _shrinkOvershoot: 2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
