@@ -4,6 +4,7 @@ using Match3.Board;
 using Match3.Grid;
 using Match3.Input;
 using Match3.Elements;
+using Match3.Matching;
 
 namespace Match3.Swap
 {
@@ -22,6 +23,7 @@ namespace Match3.Swap
         [SerializeField] private InputDetector _inputDetector;
         [SerializeField] private InputBlocker _inputBlocker;
         [SerializeField] private SwapAnimator _swapAnimator;
+        [SerializeField] private MatchFinder _matchFinder;
 
         private bool _isProcessing;
 
@@ -120,13 +122,9 @@ namespace Match3.Swap
             _inputBlocker.Unblock();
         }
 
-        /// <summary>
-        /// Stub for match checking. Replace with MatchFinder in Stage 7.
-        /// </summary>
         private bool CheckForMatch(Vector2Int posA, Vector2Int posB)
         {
-            // TODO: Replace with actual MatchFinder in Stage 7
-            return true;
+            return _matchFinder.WouldCreateMatch(posA, posB);
         }
     }
 }

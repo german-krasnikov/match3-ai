@@ -531,6 +531,8 @@ GameObject:
   - component: {fileID: 1609082429}
   - component: {fileID: 1609082433}
   - component: {fileID: 1609082432}
+  - component: {fileID: 1609082435}
+  - component: {fileID: 1609082434}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -641,6 +643,7 @@ MonoBehaviour:
   _inputDetector: {fileID: 1609082430}
   _inputBlocker: {fileID: 1609082431}
   _swapAnimator: {fileID: 1609082433}
+  _matchFinder: {fileID: 1609082435}
 --- !u!114 &1609082433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -656,6 +659,39 @@ MonoBehaviour:
   _swapDuration: 0.25
   _swapEase: 27
   _overshoot: 1.5
+--- !u!114 &1609082434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13b28f44fb68f44ab998e5be196e3d14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _showGizmos: 1
+  _highlightDuration: 1
+  _horizontalColor: {r: 1, g: 0.5, b: 0, a: 0.7}
+  _verticalColor: {r: 0, g: 0.5, b: 1, a: 0.7}
+  _crossColor: {r: 1, g: 0, b: 1, a: 0.7}
+  _grid: {fileID: 1609082426}
+  _matchFinder: {fileID: 1609082435}
+--- !u!114 &1609082435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d0b1296b26a34925bc5ec25f95e60d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _minMatchLength: 3
+  _board: {fileID: 1609082428}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
