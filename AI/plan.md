@@ -320,6 +320,8 @@
 - `Assets/Scripts/Fall/FallHandler.cs`
 - `Assets/Scripts/Fall/FallAnimator.cs`
 
+**Детальный план:** `AI/plan_stage9_fall.md`
+
 ---
 
 ## Этап 10: Refill System (Заполнение сверху)
