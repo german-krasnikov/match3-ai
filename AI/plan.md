@@ -15,50 +15,52 @@
 
 ---
 
-## Этап 1: Grid System (Сетка)
+## Этап 1: Grid System (Сетка) ✅
 
 ### 1.1 Структура данных сетки
-- [ ] `GridData` - ScriptableObject с параметрами сетки
+- [x] `GridData` - ScriptableObject с параметрами сетки
   - `width`, `height` (int)
   - `cellSize` (float)
   - `spacing` (float)
-- [ ] `Cell` - struct для ячейки
+- [x] `Cell` - struct для ячейки
   - `Vector2Int position`
-  - `bool isBlocked`
 
 ### 1.2 GridComponent
-- [ ] `GridComponent : MonoBehaviour` - управление сеткой
+- [x] `GridComponent : MonoBehaviour` - управление сеткой
   - `[SerializeField] GridData _gridData`
   - `Cell[,] _cells` - двумерный массив
   - `Vector3 GridToWorld(Vector2Int pos)` - конверсия координат
   - `Vector2Int WorldToGrid(Vector3 pos)`
   - `bool IsValidPosition(Vector2Int pos)`
-  - `event Action<GridComponent> OnGridReady`
+  - `event Action OnGridReady`
 
-### 1.3 Визуализация (опционально)
-- [ ] `GridVisualizer` - debug отрисовка сетки в Editor
-  - Gizmos для границ ячеек
+### 1.3 Визуализация
+- [x] Gizmos встроены в GridComponent (OnDrawGizmos)
+
+### 1.4 Editor Setup
+- [x] `GridSceneSetup` - создание сетки через меню
 
 **Файлы:**
 - `Assets/Scripts/Grid/GridData.cs`
 - `Assets/Scripts/Grid/Cell.cs`
 - `Assets/Scripts/Grid/GridComponent.cs`
-- `Assets/Scripts/Grid/GridVisualizer.cs`
+- `Assets/Scripts/Editor/GridSceneSetup.cs`
+- `Assets/Data/Grid/DefaultGridData.asset`
 
 ---
 
-## Этап 2: Elements (Элементы/Тайлы)
+## Этап 2: Elements (Элементы/Тайлы) ✅
 
 ### 2.1 Типы элементов
-- [ ] `ElementType` - enum (Red, Blue, Green, Yellow, Purple)
-- [ ] `ElementData` - ScriptableObject
+- [x] `ElementType` - enum (Red, Blue, Green, Yellow, Purple)
+- [x] `ElementData` - ScriptableObject
   - `ElementType type`
   - `Sprite sprite`
   - `Color color`
-- [ ] `ElementDatabase` - ScriptableObject со списком всех ElementData
+- [x] `ElementDatabase` - ScriptableObject со списком всех ElementData
 
 ### 2.2 ElementComponent
-- [ ] `ElementComponent : MonoBehaviour` - компонент элемента
+- [x] `ElementComponent : MonoBehaviour` - компонент элемента
   - `[SerializeField] SpriteRenderer _spriteRenderer`
   - `ElementType Type { get; private set; }`
   - `Vector2Int GridPosition { get; set; }`
@@ -66,14 +68,22 @@
   - `event Action<ElementComponent> OnDestroyed`
 
 ### 2.3 Префаб элемента
-- [ ] Prefab: SpriteRenderer + ElementComponent
+- [x] Prefab: SpriteRenderer + ElementComponent
   - Настройка сортировки спрайтов
+
+### 2.4 Editor Setup (бонус)
+- [x] `ElementsSetup` - автоматическое создание ассетов
+  - Menu: Match3 → Setup → Create Sorting Layers
+  - Menu: Match3 → Setup → Create Element Assets
 
 **Файлы:**
 - `Assets/Scripts/Elements/ElementType.cs`
 - `Assets/Scripts/Elements/ElementData.cs`
 - `Assets/Scripts/Elements/ElementDatabase.cs`
 - `Assets/Scripts/Elements/ElementComponent.cs`
+- `Assets/Scripts/Editor/ElementsSetup.cs`
+
+**Детальный план:** `AI/plan_stage2_elements.md`
 
 ---
 

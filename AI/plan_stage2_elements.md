@@ -1,5 +1,7 @@
 # Этап 2: Elements — Детальный план реализации
 
+**Статус: ✅ РЕАЛИЗОВАНО**
+
 ## Обзор
 Создание системы игровых элементов (тайлов). Элемент — это визуальный объект на сетке, имеющий тип (цвет) и позицию.
 
@@ -261,16 +263,16 @@ Assets/
 
 ## 2.7 Порядок реализации
 
-| # | Задача | Время |
-|---|--------|-------|
-| 1 | Создать `ElementType.cs` | — |
-| 2 | Создать `ElementData.cs` | — |
-| 3 | Создать `ElementDatabase.cs` | — |
-| 4 | Создать `ElementComponent.cs` | — |
-| 5 | Создать placeholder спрайты | — |
-| 6 | Создать ElementData ассеты (5 шт) | — |
-| 7 | Создать ElementDatabase ассет | — |
-| 8 | Создать Element.prefab | — |
+| # | Задача | Статус |
+|---|--------|--------|
+| 1 | Создать `ElementType.cs` | ✅ |
+| 2 | Создать `ElementData.cs` | ✅ |
+| 3 | Создать `ElementDatabase.cs` | ✅ |
+| 4 | Создать `ElementComponent.cs` | ✅ |
+| 5 | Создать placeholder спрайты | ⏭️ Используем Color tint |
+| 6 | Создать ElementData ассеты (5 шт) | ✅ Editor скрипт |
+| 7 | Создать ElementDatabase ассет | ✅ Editor скрипт |
+| 8 | Создать Element.prefab | ✅ Editor скрипт |
 
 ---
 
@@ -378,3 +380,47 @@ element.Initialize(data, new Vector2Int(x, y));
 - Pixels Per Unit: 128 (если спрайт 128x128, получим 1 unit)
 - Filter Mode: Bilinear
 - Compression: None (для чёткости placeholder'ов)
+
+---
+
+## 2.13 Editor Setup Script
+
+**Путь:** `Assets/Scripts/Editor/ElementsSetup.cs`
+
+Автоматизирует создание всех ассетов через меню Unity.
+
+### Команды меню
+
+| Меню | Описание |
+|------|----------|
+| `Match3 → Setup → Create Sorting Layers` | Создаёт Board, Elements, Effects |
+| `Match3 → Setup → Create Element Assets` | Создаёт все ассеты и prefab |
+
+### Порядок запуска
+1. **Create Sorting Layers** — сначала
+2. **Create Element Assets** — после
+
+### Что создаётся
+
+**ElementData ассеты (5 шт):**
+| Файл | Type | Color |
+|------|------|-------|
+| `RedElement.asset` | Red | #FF4444 |
+| `BlueElement.asset` | Blue | #4488FF |
+| `GreenElement.asset` | Green | #44DD44 |
+| `YellowElement.asset` | Yellow | #FFDD44 |
+| `PurpleElement.asset` | Purple | #AA44FF |
+
+**ElementDatabase:**
+- `Assets/Data/Elements/ElementDatabase.asset`
+- Содержит ссылки на все 5 ElementData
+
+**Element Prefab:**
+- `Assets/Prefabs/Element.prefab`
+- SpriteRenderer (Sorting Layer: Elements)
+- ElementComponent (с привязанным SpriteRenderer)
+
+### Особенности
+- **Идемпотентность** — не перезаписывает существующие ассеты
+- **Автосвязывание** — SpriteRenderer автоматически назначается в ElementComponent
+- **Fallback** — если Sorting Layer "Elements" не существует, использует "Default"
