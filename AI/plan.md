@@ -254,29 +254,32 @@
 
 ---
 
-## Этап 8: Destroy System (Уничтожение)
+## Этап 8: Destroy System (Уничтожение) ✅
 
 ### 8.1 DestroyHandler
-- [ ] `DestroyHandler : MonoBehaviour`
+- [x] `DestroyHandler : MonoBehaviour`
   - `void DestroyMatches(List<Match> matches)`
   - Удаление из BoardComponent
   - Возврат в пул (ElementPool)
-  - `event Action<List<Match>> OnMatchesDestroyed`
+  - `event Action<int> OnDestroyCompleted`
 
 ### 8.2 DestroyAnimator
-- [ ] `DestroyAnimator : MonoBehaviour` - анимации уничтожения
-  - `[SerializeField] float _destroyDuration = 0.3f`
-  - `Sequence AnimateDestroy(List<ElementComponent> elements)`
-  - Эффекты: Scale → 0, Fade out, Particle burst
-  - DOTween Sequence для синхронизации
+- [x] `DestroyAnimator : MonoBehaviour` - анимации уничтожения
+  - Punch → Shrink → Fade (DOTween)
+  - Stagger delay между элементами
+  - Reset scale/alpha для пулинга
 
-### 8.3 Particle Effects (опционально)
+### 8.3 Интеграция в SwapHandler
+- [x] После успешного свапа вызывается DestroyMatches
+- [x] Input блокируется до завершения анимации
+
+### 8.4 Particle Effects (опционально)
 - [ ] VFX при уничтожении элементов
-  - ParticleSystem на каждый тип элемента
 
 **Файлы:**
 - `Assets/Scripts/Destroy/DestroyHandler.cs`
 - `Assets/Scripts/Destroy/DestroyAnimator.cs`
+- `Assets/Scripts/Editor/DestroySystemSetup.cs`
 
 **Детальный план:** `AI/plan_stage8_destroy.md`
 

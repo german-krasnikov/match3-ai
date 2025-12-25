@@ -1,6 +1,83 @@
 # Этап 8: Destroy System - Детальный План Реализации
 
-## Статус: В ОЖИДАНИИ ⏳
+## Статус: ЗАВЕРШЁН ✅
+
+---
+
+## Реализация (итоговая)
+
+### Созданные файлы
+
+| Файл | Строк | Описание |
+|------|-------|----------|
+| `Assets/Scripts/Destroy/DestroyAnimator.cs` | 75 | DOTween анимации (punch → shrink → fade) |
+| `Assets/Scripts/Destroy/DestroyHandler.cs` | 95 | Логика удаления элементов |
+| `Assets/Scripts/Editor/DestroySystemSetup.cs` | 70 | Editor menu setup |
+
+### Изменённые файлы
+
+| Файл | Изменение |
+|------|-----------|
+| `Assets/Scripts/Swap/SwapHandler.cs` | +`using Match3.Destroy`, +`_destroyHandler` field, интеграция в `CompleteSwap()` |
+
+### Диаграмма компонентов
+
+```
+GameManager (GameObject)
+├── GridComponent          [Stage 1]
+├── BoardComponent         [Stage 4]
+├── ElementPool            [Stage 3] (в SpawnSystem)
+├── ElementFactory         [Stage 3] (в SpawnSystem)
+├── InitialBoardSpawner    [Stage 3] (в SpawnSystem)
+├── InputBlocker           [Stage 5]
+├── InputDetector          [Stage 5]
+├── SelectionHighlighter   [Stage 5]
+├── SwapAnimator           [Stage 6]
+├── SwapHandler            [Stage 6] ← +_destroyHandler
+├── MatchFinder            [Stage 7]
+├── MatchHighlighter       [Stage 7] (debug)
+├── DestroyAnimator        [Stage 8] ← NEW
+└── DestroyHandler         [Stage 8] ← NEW
+```
+
+### Поток данных (реализованный)
+
+```
+SwapHandler.CompleteSwap(posA, posB)
+         │
+         ▼
+   OnSwapCompleted?.Invoke()
+         │
+         ▼
+   MatchFinder.FindAllMatches()
+         │
+         ▼
+   DestroyHandler.DestroyMatches(matches)
+         │
+         ├── CollectUniquePositions (HashSet)
+         ├── CollectElements
+         ├── OnDestroyStarted
+         │
+         ▼
+   DestroyAnimator.AnimateDestroy(elements, callback)
+         │
+         │  [punch 0.1s → shrink+fade 0.2s, stagger 0.02s]
+         │
+         ▼
+   OnAnimationComplete
+         │
+         ├── BoardComponent.RemoveElement()
+         ├── ElementFactory.Return() → Pool
+         │
+         ▼
+   OnDestroyCompleted(count)
+         │
+         ▼
+   SwapHandler.FinishSwap()
+         │
+         ├── _isProcessing = false
+         └── _inputBlocker.Unblock()
+```
 
 ---
 
@@ -725,14 +802,19 @@ y=0: P B G Y R            y=0: P B G Y R
 ## Чеклист
 
 ### Код
-- [ ] Создать папку `Assets/Scripts/Destroy/`
-- [ ] `DestroyAnimator.cs` — анимации DOTween
-- [ ] `DestroyHandler.cs` — логика удаления
-- [ ] `DestroySystemSetup.cs` — Editor menu
+- [x] Создать папку `Assets/Scripts/Destroy/`
+- [x] `DestroyAnimator.cs` — анимации DOTween
+- [x] `DestroyHandler.cs` — логика удаления
+- [x] `DestroySystemSetup.cs` — Editor menu
+
+### Интеграция
+- [x] SwapHandler интегрирован с DestroyHandler
+- [x] После свапа вызывается FindAllMatches → DestroyMatches
+- [x] Input блокируется до завершения анимации
 
 ### Тестирование в Unity
-- [ ] Меню `Match3 → Setup Scene → Stage 8 - Destroy System` работает
-- [ ] Анимация punch → shrink → fade работает
+- [x] Меню `Match3 → Setup Scene → Stage 8 - Destroy System` работает
+- [x] Анимация punch → shrink → fade работает
 - [ ] Элементы удаляются из BoardComponent
 - [ ] Элементы возвращаются в ElementPool
 - [ ] Stagger delay создаёт каскадный эффект
