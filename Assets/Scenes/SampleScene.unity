@@ -539,6 +539,8 @@ GameObject:
   - component: {fileID: 1609082438}
   - component: {fileID: 1609082441}
   - component: {fileID: 1609082440}
+  - component: {fileID: 1609082443}
+  - component: {fileID: 1609082442}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -647,12 +649,8 @@ MonoBehaviour:
   _board: {fileID: 1609082428}
   _grid: {fileID: 1609082426}
   _inputDetector: {fileID: 1609082430}
-  _inputBlocker: {fileID: 1609082431}
   _swapAnimator: {fileID: 1609082433}
   _matchFinder: {fileID: 1609082435}
-  _destroyHandler: {fileID: 1609082436}
-  _fallHandler: {fileID: 1609082438}
-  _refillHandler: {fileID: 1609082440}
 --- !u!114 &1609082433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -803,8 +801,46 @@ MonoBehaviour:
   _fallEase: 5
   _bounceStrength: 0.15
   _bounceDuration: 0.15
-  _spawnScale: 0.5
+  _targetScale: {x: 5.5, y: 5.5, z: 1}
+  _spawnScaleMultiplier: 0.5
   _scaleUpDuration: 0.1
+--- !u!114 &1609082442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2516e9b4d1d74b95a42a76f96e1c072, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _board: {fileID: 1609082428}
+  _inputBlocker: {fileID: 1609082431}
+  _swapHandler: {fileID: 1609082432}
+  _matchFinder: {fileID: 1609082435}
+  _destroyHandler: {fileID: 1609082436}
+  _fallHandler: {fileID: 1609082438}
+  _refillHandler: {fileID: 1609082440}
+  _boardShuffler: {fileID: 1609082443}
+--- !u!114 &1609082443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609082425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff5029c58b1cc485cb4bcb67ce1dbedc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _board: {fileID: 1609082428}
+  _grid: {fileID: 1609082426}
+  _shuffleDuration: 0.4
+  _shuffleEase: 7
+  _staggerDelay: 0.02
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

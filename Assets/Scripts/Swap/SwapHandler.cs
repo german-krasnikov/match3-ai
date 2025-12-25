@@ -5,14 +5,12 @@ using Match3.Grid;
 using Match3.Input;
 using Match3.Elements;
 using Match3.Matching;
-using Match3.Destroy;
-using Match3.Fall;
-using Match3.Refill;
 
 namespace Match3.Swap
 {
     /// <summary>
-    /// Handles swap logic: validates, animates, and checks for matches.
+    /// Handles swap logic: validates, animates, checks for matches.
+    /// Game loop coordination is handled by GameLoopController.
     /// </summary>
     public class SwapHandler : MonoBehaviour
     {
@@ -24,29 +22,19 @@ namespace Match3.Swap
         [SerializeField] private BoardComponent _board;
         [SerializeField] private GridComponent _grid;
         [SerializeField] private InputDetector _inputDetector;
-        [SerializeField] private InputBlocker _inputBlocker;
         [SerializeField] private SwapAnimator _swapAnimator;
         [SerializeField] private MatchFinder _matchFinder;
-        [SerializeField] private DestroyHandler _destroyHandler;
-        [SerializeField] private FallHandler _fallHandler;
-        [SerializeField] private RefillHandler _refillHandler;
 
         private bool _isProcessing;
 
         private void OnEnable()
         {
             _inputDetector.OnSwapRequested += HandleSwapRequest;
-            _destroyHandler.OnDestroyCompleted += OnDestroyCompleted;
-            _fallHandler.OnFallsCompleted += OnFallsCompleted;
-            _refillHandler.OnRefillsCompleted += OnRefillsCompleted;
         }
 
         private void OnDisable()
         {
             _inputDetector.OnSwapRequested -= HandleSwapRequest;
-            _destroyHandler.OnDestroyCompleted -= OnDestroyCompleted;
-            _fallHandler.OnFallsCompleted -= OnFallsCompleted;
-            _refillHandler.OnRefillsCompleted -= OnRefillsCompleted;
         }
 
         public void RequestSwap(Vector2Int posA, Vector2Int posB)
@@ -82,8 +70,6 @@ namespace Match3.Swap
             ElementComponent elementA, ElementComponent elementB)
         {
             _isProcessing = true;
-            _inputBlocker.Block();
-
             OnSwapStarted?.Invoke(posA, posB);
 
             Vector3 targetPosA = _grid.GridToWorld(posB);
@@ -96,11 +82,12 @@ namespace Match3.Swap
             {
                 _board.SwapElements(posA, posB);
 
-                bool hasMatch = CheckForMatch(posA, posB);
+                bool hasMatch = _matchFinder.WouldCreateMatch(posA, posB);
 
                 if (hasMatch)
                 {
-                    CompleteSwap(posA, posB);
+                    _isProcessing = false;
+                    OnSwapCompleted?.Invoke(posA, posB);
                 }
                 else
                 {
@@ -117,51 +104,9 @@ namespace Match3.Swap
 
             _swapAnimator.AnimateRevert(elementA, elementB, originalPosA, originalPosB, () =>
             {
+                _isProcessing = false;
                 OnSwapReverted?.Invoke(posA, posB);
-                FinishSwap();
             });
-        }
-
-        private void CompleteSwap(Vector2Int posA, Vector2Int posB)
-        {
-            OnSwapCompleted?.Invoke(posA, posB);
-
-            var matches = _matchFinder.FindAllMatches();
-            if (matches.Count > 0)
-            {
-                _destroyHandler.DestroyMatches(matches);
-            }
-            else
-            {
-                FinishSwap();
-            }
-        }
-
-        private void OnDestroyCompleted(int count)
-        {
-            _fallHandler.ExecuteFalls();
-        }
-
-        private void OnFallsCompleted()
-        {
-            _refillHandler.ExecuteRefills();
-        }
-
-        private void OnRefillsCompleted()
-        {
-            // TODO: Stage 11 - Check for cascade matches here
-            FinishSwap();
-        }
-
-        private void FinishSwap()
-        {
-            _isProcessing = false;
-            _inputBlocker.Unblock();
-        }
-
-        private bool CheckForMatch(Vector2Int posA, Vector2Int posB)
-        {
-            return _matchFinder.WouldCreateMatch(posA, posB);
         }
     }
 }
