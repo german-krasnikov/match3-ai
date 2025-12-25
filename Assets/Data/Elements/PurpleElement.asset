@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: PurpleElement
   m_EditorClassIdentifier: 
   _type: 5
-  _sprite: {fileID: 0}
+  _sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.67, g: 0.27, b: 1, a: 1}

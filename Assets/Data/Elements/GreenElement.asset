@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: GreenElement
   m_EditorClassIdentifier: 
   _type: 3
-  _sprite: {fileID: 0}
+  _sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.27, g: 0.87, b: 0.27, a: 1}

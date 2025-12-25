@@ -37,6 +37,7 @@ namespace Match3.Spawn
         public ElementComponent Get()
         {
             var element = _pool.Count > 0 ? _pool.Pop() : CreateNew();
+            element.transform.SetParent(null);
             element.gameObject.SetActive(true);
             return element;
         }
