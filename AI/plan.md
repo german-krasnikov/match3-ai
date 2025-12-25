@@ -186,10 +186,10 @@
 
 ---
 
-## Этап 6: Swap System (Свап)
+## Этап 6: Swap System (Свап) ✅
 
 ### 6.1 SwapHandler
-- [ ] `SwapHandler : MonoBehaviour` - логика обмена
+- [x] `SwapHandler : MonoBehaviour` - логика обмена
   - `[SerializeField] BoardComponent _board`
   - `bool CanSwap(Vector2Int a, Vector2Int b)` - проверка соседства
   - `void ExecuteSwap(Vector2Int a, Vector2Int b)`
@@ -198,13 +198,13 @@
   - `event Action<Vector2Int, Vector2Int> OnSwapReverted`
 
 ### 6.2 SwapAnimator
-- [ ] `SwapAnimator : MonoBehaviour` - анимация обмена (DOTween)
+- [x] `SwapAnimator : MonoBehaviour` - анимация обмена (DOTween)
   - `[SerializeField] float _swapDuration = 0.25f`
   - `Tween AnimateSwap(ElementComponent a, ElementComponent b)`
   - Sequence: одновременное движение двух элементов
 
 ### 6.3 SwapValidator
-- [ ] Проверка: привёл ли свап к матчу?
+- [x] Проверка: привёл ли свап к матчу? (stub в SwapHandler)
   - Если нет → реверс свапа
   - Если да → продолжить цикл
   - **Примечание:** Временная заглушка, реальная логика в Этапе 7

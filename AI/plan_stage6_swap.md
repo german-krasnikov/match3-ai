@@ -1,6 +1,6 @@
 # Этап 6: Swap System - Детальный План Реализации
 
-## Статус: НЕ НАЧАТ
+## Статус: ЗАВЕРШЁН
 
 ## Обзор
 
@@ -601,10 +601,10 @@ private bool CheckForMatch(Vector2Int posA, Vector2Int posB)
 
 ## Чеклист
 
-- [ ] Создать папку `Assets/Scripts/Swap/`
-- [ ] `SwapAnimator.cs` создан
-- [ ] `SwapHandler.cs` создан
-- [ ] `SwapSystemSetup.cs` создан
+- [x] Создать папку `Assets/Scripts/Swap/`
+- [x] `SwapAnimator.cs` создан
+- [x] `SwapHandler.cs` создан
+- [x] `SwapSystemSetup.cs` создан
 - [ ] Меню Setup работает
 - [ ] Свап анимируется (bouncy)
 - [ ] BoardComponent обновляется
