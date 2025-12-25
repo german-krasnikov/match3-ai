@@ -87,33 +87,38 @@
 
 ---
 
-## Этап 3: Spawn System (Спаун)
+## Этап 3: Spawn System (Спаун) ✅
 
 ### 3.1 ElementFactory
-- [ ] `ElementFactory : MonoBehaviour` - создание элементов
-  - `[SerializeField] ElementComponent _elementPrefab`
+- [x] `ElementFactory : MonoBehaviour` - создание элементов
+  - `[SerializeField] ElementPool _pool`
   - `[SerializeField] ElementDatabase _database`
-  - `ElementComponent Create(ElementType type, Vector3 worldPos)`
-  - `ElementComponent CreateRandom(Vector3 worldPos)`
+  - `ElementComponent Create(ElementType type, Vector3 worldPos, Vector2Int gridPos)`
+  - `ElementComponent CreateRandom(Vector3 worldPos, Vector2Int gridPos)`
+  - `ElementComponent CreateRandomExcluding(...)` - для алгоритма без матчей
   - `void Return(ElementComponent element)` - для пулинга
 
 ### 3.2 Object Pooling
-- [ ] `ElementPool` - пул объектов для переиспользования
+- [x] `ElementPool` - пул объектов для переиспользования
   - `Stack<ElementComponent> _pool`
+  - `Prewarm()` - предзаполнение 64 объектами
   - `ElementComponent Get()`
   - `void Release(ElementComponent element)`
 
 ### 3.3 InitialBoardSpawner
-- [ ] `InitialBoardSpawner : MonoBehaviour` - начальное заполнение
+- [x] `InitialBoardSpawner : MonoBehaviour` - начальное заполнение
   - `[SerializeField] GridComponent _grid`
   - `[SerializeField] ElementFactory _factory`
   - `void SpawnInitialBoard()`
+  - `ElementComponent[,] SpawnedElements` - для передачи в BoardComponent
   - Алгоритм: заполнение без начальных матчей (проверка 2 соседей)
 
 **Файлы:**
 - `Assets/Scripts/Spawn/ElementFactory.cs`
 - `Assets/Scripts/Spawn/ElementPool.cs`
 - `Assets/Scripts/Spawn/InitialBoardSpawner.cs`
+
+**Детальный план:** `AI/plan_stage3_spawn.md`
 
 ---
 

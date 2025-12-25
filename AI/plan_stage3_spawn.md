@@ -1,6 +1,6 @@
 # Этап 3: Spawn System — Детальный план реализации
 
-**Статус: ⏳ В РАБОТЕ**
+**Статус: ✅ РЕАЛИЗОВАНО**
 
 ## Обзор
 
@@ -513,9 +513,30 @@ Debug.Log($"Pool: {_pool.PooledCount} available, {_pool.TotalCreated} total crea
 | Проблема | Решение |
 |----------|---------|
 | Элементы не видны | Проверить Sorting Layer = "Elements" |
+| Элементы не видны (Pool) | **FIXED:** `Get()` должен делать `SetParent(null)` перед `SetActive(true)` — иначе элемент остаётся child'ом неактивного контейнера |
 | NullReference при спауне | Проверить wiring Factory → Pool → Prefab |
 | Есть начальные матчи | Проверить порядок обхода (y, потом x) |
 | Лаг при запуске | Увеличить prewarm, уменьшить размер спрайтов |
+
+### Баг: элементы невидимы после Pool.Get()
+
+**Причина:** В `Awake()` создаётся неактивный контейнер:
+```csharp
+_poolContainer.gameObject.SetActive(false);
+```
+
+При `Prewarm()` элементы становятся children этого контейнера. При `Get()` вызывался `SetActive(true)`, но элемент оставался child'ом неактивного parent → Unity не показывает.
+
+**Решение:**
+```csharp
+public ElementComponent Get()
+{
+    var element = _pool.Count > 0 ? _pool.Pop() : CreateNew();
+    element.transform.SetParent(null);  // ← открепить от неактивного контейнера
+    element.gameObject.SetActive(true);
+    return element;
+}
+```
 
 ---
 
