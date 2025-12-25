@@ -285,30 +285,30 @@
 
 ---
 
-## Этап 9: Fall System (Падение)
+## Этап 9: Fall System (Падение) ✅
 
 ### 9.1 FallCalculator
-- [ ] `FallCalculator` - расчёт падения
+- [x] `FallCalculator` - расчёт падения
   - `List<FallData> CalculateFalls(BoardComponent board)`
   - Для каждого столбца снизу вверх:
     - Найти пустые ячейки
     - Определить кто куда падает
 
 ### 9.2 FallData
-- [ ] `FallData` - struct
+- [x] `FallData` - struct
   - `ElementComponent element`
   - `Vector2Int from`
   - `Vector2Int to`
   - `int distance`
 
 ### 9.3 FallHandler
-- [ ] `FallHandler : MonoBehaviour`
+- [x] `FallHandler : MonoBehaviour`
   - `void ExecuteFalls(List<FallData> falls)`
   - Обновление BoardComponent
   - `event Action OnFallsCompleted`
 
 ### 9.4 FallAnimator
-- [ ] `FallAnimator : MonoBehaviour` - анимация падения
+- [x] `FallAnimator : MonoBehaviour` - анимация падения
   - `[SerializeField] float _fallSpeed = 10f` (units/sec)
   - `[SerializeField] AnimationCurve _fallCurve` (ease)
   - `Sequence AnimateFalls(List<FallData> falls)`

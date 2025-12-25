@@ -1,6 +1,6 @@
 # Этап 9: Fall System - Детальный План Реализации
 
-## Статус: В ОЖИДАНИИ
+## Статус: ЗАВЕРШЁН ✅
 
 ---
 
@@ -1050,17 +1050,17 @@ y=0: R B G Y P           y=0: R B G Y P               y=0: R B G Y P
 ## Чеклист
 
 ### Код
-- [ ] Создать папку `Assets/Scripts/Fall/`
-- [ ] `FallData.cs` — readonly struct
-- [ ] `FallCalculator.cs` — статический класс расчёта
-- [ ] `FallAnimator.cs` — DOTween анимации
-- [ ] `FallHandler.cs` — координация
-- [ ] `FallSystemSetup.cs` — Editor menu
+- [x] Создать папку `Assets/Scripts/Fall/`
+- [x] `FallData.cs` — readonly struct
+- [x] `FallCalculator.cs` — статический класс расчёта
+- [x] `FallAnimator.cs` — DOTween анимации
+- [x] `FallHandler.cs` — координация
+- [x] `FallSystemSetup.cs` — Editor menu
 
 ### Интеграция
-- [ ] SwapHandler получает ссылку на FallHandler
-- [ ] DestroyHandler.OnDestroyCompleted → FallHandler.ExecuteFalls
-- [ ] FallHandler.OnFallsCompleted → SwapHandler (временно до Stage 10)
+- [x] SwapHandler получает ссылку на FallHandler
+- [x] DestroyHandler.OnDestroyCompleted → FallHandler.ExecuteFalls
+- [x] FallHandler.OnFallsCompleted → SwapHandler (временно до Stage 10)
 
 ### Тестирование в Unity
 - [ ] Меню `Match3 → Setup Scene → Stage 9 - Fall System` работает
