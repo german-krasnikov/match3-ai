@@ -1,6 +1,67 @@
 # Этап 7: Match Detection - Детальный План Реализации
 
-## Статус: В РАЗРАБОТКЕ
+## Статус: ЗАВЕРШЁН ✅
+
+---
+
+## Реализация (итоговая)
+
+### Созданные файлы
+
+| Файл | Строк | Описание |
+|------|-------|----------|
+| `Assets/Scripts/Match/Match.cs` | 38 | readonly struct данных матча |
+| `Assets/Scripts/Match/MatchFinder.cs` | 201 | Алгоритм поиска матчей |
+| `Assets/Scripts/Match/MatchHighlighter.cs` | 68 | Debug визуализация через Gizmos |
+| `Assets/Scripts/Editor/MatchSystemSetup.cs` | 56 | Editor menu setup |
+
+### Изменённые файлы
+
+| Файл | Изменение |
+|------|-----------|
+| `Assets/Scripts/Swap/SwapHandler.cs` | +`using Match3.Matching`, +`_matchFinder` field, заменён `CheckForMatch()` |
+
+### Диаграмма компонентов
+
+```
+GameManager (GameObject)
+├── GridComponent          [Stage 1]
+├── BoardComponent         [Stage 4]
+├── ElementPool            [Stage 3]
+├── ElementFactory         [Stage 3]
+├── InitialBoardSpawner    [Stage 3]
+├── InputBlocker           [Stage 5]
+├── InputDetector          [Stage 5]
+├── SelectionHighlighter   [Stage 5]
+├── SwapAnimator           [Stage 6]
+├── SwapHandler            [Stage 6] ← _matchFinder добавлен
+├── MatchFinder            [Stage 7] ← NEW
+└── MatchHighlighter       [Stage 7] ← NEW (debug)
+```
+
+### Поток данных
+
+```
+SwapHandler.CheckForMatch(posA, posB)
+         │
+         ▼
+MatchFinder.WouldCreateMatch(posA, posB)
+         │
+         ├── FindMatchesAt(posA) ──► horizontal + vertical scan
+         │
+         └── FindMatchesAt(posB) ──► horizontal + vertical scan
+         │
+         ▼
+    bool hasMatch
+         │
+    ┌────┴────┐
+   true      false
+    │         │
+    ▼         ▼
+ Complete   Revert
+```
+
+---
 
 ## Обзор
 
@@ -87,7 +148,7 @@ Match {
 }
 ```
 
-### Код
+### Реализованный код
 
 ```csharp
 using System.Collections.Generic;
@@ -96,19 +157,13 @@ using Match3.Elements;
 
 namespace Match3.Matching
 {
-    /// <summary>
-    /// Orientation of a match on the board.
-    /// </summary>
     public enum MatchOrientation
     {
         Horizontal,
         Vertical,
-        Cross  // L-shape or T-shape (merged matches)
+        Cross
     }
 
-    /// <summary>
-    /// Represents a match of 3+ elements of the same type.
-    /// </summary>
     public readonly struct Match
     {
         public readonly ElementType Type;
@@ -125,9 +180,6 @@ namespace Match3.Matching
             Orientation = orientation;
         }
 
-        /// <summary>
-        /// Creates a merged match from two intersecting matches.
-        /// </summary>
         public static Match Merge(Match a, Match b)
         {
             var positions = new HashSet<Vector2Int>(a.Positions);
@@ -137,10 +189,7 @@ namespace Match3.Matching
             return new Match(a.Type, new List<Vector2Int>(positions), MatchOrientation.Cross);
         }
 
-        public override string ToString()
-        {
-            return $"Match({Type}, {Count} elements, {Orientation})";
-        }
+        public override string ToString() => $"Match({Type}, {Count} elements, {Orientation})";
     }
 }
 ```
@@ -186,7 +235,7 @@ R R R ← Горизонталь + Вертикаль = Cross
     R
 ```
 
-### Код
+### Реализованный код
 
 ```csharp
 using System.Collections.Generic;
@@ -196,88 +245,49 @@ using Match3.Elements;
 
 namespace Match3.Matching
 {
-    /// <summary>
-    /// Finds matches of 3+ elements on the board.
-    /// </summary>
     public class MatchFinder : MonoBehaviour
     {
-        // === SETTINGS ===
-
         [Header("Settings")]
         [SerializeField] private int _minMatchLength = 3;
-
-        // === DEPENDENCIES ===
 
         [Header("Dependencies")]
         [SerializeField] private BoardComponent _board;
 
-        // === PRIVATE FIELDS ===
-
-        // Reusable buffers to reduce GC
         private readonly List<Match> _matchBuffer = new();
         private readonly List<Vector2Int> _lineBuffer = new();
-        private readonly HashSet<Vector2Int> _processedPositions = new();
 
-        // === PUBLIC METHODS ===
-
-        /// <summary>
-        /// Finds all matches on the entire board.
-        /// Used after falls/refills for cascade detection.
-        /// </summary>
         public List<Match> FindAllMatches()
         {
             _matchBuffer.Clear();
-            _processedPositions.Clear();
 
-            // Find horizontal matches
             for (int y = 0; y < _board.Height; y++)
-            {
                 FindHorizontalMatchesInRow(y, _matchBuffer);
-            }
 
-            // Find vertical matches
             for (int x = 0; x < _board.Width; x++)
-            {
                 FindVerticalMatchesInColumn(x, _matchBuffer);
-            }
 
-            // Merge intersecting matches
             return MergeIntersectingMatches(_matchBuffer);
         }
 
-        /// <summary>
-        /// Finds matches that include the specified position.
-        /// Used for swap validation.
-        /// </summary>
         public List<Match> FindMatchesAt(Vector2Int position)
         {
             _matchBuffer.Clear();
 
-            var horizontalMatch = FindHorizontalMatchAt(position);
-            if (horizontalMatch.IsValid)
-                _matchBuffer.Add(horizontalMatch);
+            var horizontal = FindHorizontalMatchAt(position);
+            if (horizontal.IsValid)
+                _matchBuffer.Add(horizontal);
 
-            var verticalMatch = FindVerticalMatchAt(position);
-            if (verticalMatch.IsValid)
-                _matchBuffer.Add(verticalMatch);
+            var vertical = FindVerticalMatchAt(position);
+            if (vertical.IsValid)
+                _matchBuffer.Add(vertical);
 
             return MergeIntersectingMatches(_matchBuffer);
         }
 
-        /// <summary>
-        /// Checks if swapping these positions would create a match.
-        /// Optimized version for swap validation.
-        /// </summary>
         public bool WouldCreateMatch(Vector2Int posA, Vector2Int posB)
         {
-            var matchesA = FindMatchesAt(posA);
-            if (matchesA.Count > 0) return true;
-
-            var matchesB = FindMatchesAt(posB);
-            return matchesB.Count > 0;
+            return FindMatchesAt(posA).Count > 0 || FindMatchesAt(posB).Count > 0;
         }
-
-        // === PRIVATE METHODS: HORIZONTAL ===
 
         private void FindHorizontalMatchesInRow(int y, List<Match> results)
         {
@@ -285,78 +295,24 @@ namespace Match3.Matching
             while (x < _board.Width)
             {
                 var type = _board.GetElementType(new Vector2Int(x, y));
-                if (type == null || type == ElementType.None)
-                {
-                    x++;
-                    continue;
-                }
+                if (type == null || type == ElementType.None) { x++; continue; }
 
-                // Count consecutive elements of same type
                 _lineBuffer.Clear();
                 _lineBuffer.Add(new Vector2Int(x, y));
 
                 int nextX = x + 1;
-                while (nextX < _board.Width)
+                while (nextX < _board.Width && _board.GetElementType(new Vector2Int(nextX, y)) == type)
                 {
-                    var nextType = _board.GetElementType(new Vector2Int(nextX, y));
-                    if (nextType != type) break;
-
                     _lineBuffer.Add(new Vector2Int(nextX, y));
                     nextX++;
                 }
 
-                // Check if match
                 if (_lineBuffer.Count >= _minMatchLength)
-                {
-                    results.Add(new Match(
-                        type.Value,
-                        new List<Vector2Int>(_lineBuffer),
-                        MatchOrientation.Horizontal
-                    ));
-                }
+                    results.Add(new Match(type.Value, new List<Vector2Int>(_lineBuffer), MatchOrientation.Horizontal));
 
                 x = nextX;
             }
         }
-
-        private Match FindHorizontalMatchAt(Vector2Int position)
-        {
-            var type = _board.GetElementType(position);
-            if (type == null || type == ElementType.None)
-                return default;
-
-            _lineBuffer.Clear();
-            _lineBuffer.Add(position);
-
-            // Scan left
-            int left = position.x - 1;
-            while (left >= 0)
-            {
-                if (_board.GetElementType(new Vector2Int(left, position.y)) != type)
-                    break;
-                _lineBuffer.Insert(0, new Vector2Int(left, position.y));
-                left--;
-            }
-
-            // Scan right
-            int right = position.x + 1;
-            while (right < _board.Width)
-            {
-                if (_board.GetElementType(new Vector2Int(right, position.y)) != type)
-                    break;
-                _lineBuffer.Add(new Vector2Int(right, position.y));
-                right++;
-            }
-
-            if (_lineBuffer.Count >= _minMatchLength)
-            {
-                return new Match(type.Value, new List<Vector2Int>(_lineBuffer), MatchOrientation.Horizontal);
-            }
-
-            return default;
-        }
-
-        // === PRIVATE METHODS: VERTICAL ===
 
         private void FindVerticalMatchesInColumn(int x, List<Match> results)
         {
@@ -364,86 +320,78 @@ namespace Match3.Matching
             while (y < _board.Height)
             {
                 var type = _board.GetElementType(new Vector2Int(x, y));
-                if (type == null || type == ElementType.None)
-                {
-                    y++;
-                    continue;
-                }
+                if (type == null || type == ElementType.None) { y++; continue; }
 
-                // Count consecutive elements of same type
                 _lineBuffer.Clear();
                 _lineBuffer.Add(new Vector2Int(x, y));
 
                 int nextY = y + 1;
-                while (nextY < _board.Height)
+                while (nextY < _board.Height && _board.GetElementType(new Vector2Int(x, nextY)) == type)
                 {
-                    var nextType = _board.GetElementType(new Vector2Int(x, nextY));
-                    if (nextType != type) break;
-
                     _lineBuffer.Add(new Vector2Int(x, nextY));
                     nextY++;
                 }
 
-                // Check if match
                 if (_lineBuffer.Count >= _minMatchLength)
-                {
-                    results.Add(new Match(
-                        type.Value,
-                        new List<Vector2Int>(_lineBuffer),
-                        MatchOrientation.Vertical
-                    ));
-                }
+                    results.Add(new Match(type.Value, new List<Vector2Int>(_lineBuffer), MatchOrientation.Vertical));
 
                 y = nextY;
             }
         }
 
-        private Match FindVerticalMatchAt(Vector2Int position)
+        private Match FindHorizontalMatchAt(Vector2Int pos)
         {
-            var type = _board.GetElementType(position);
-            if (type == null || type == ElementType.None)
-                return default;
+            var type = _board.GetElementType(pos);
+            if (type == null || type == ElementType.None) return default;
 
             _lineBuffer.Clear();
-            _lineBuffer.Add(position);
+            _lineBuffer.Add(pos);
 
-            // Scan down
-            int down = position.y - 1;
-            while (down >= 0)
+            for (int left = pos.x - 1; left >= 0; left--)
             {
-                if (_board.GetElementType(new Vector2Int(position.x, down)) != type)
-                    break;
-                _lineBuffer.Insert(0, new Vector2Int(position.x, down));
-                down--;
+                if (_board.GetElementType(new Vector2Int(left, pos.y)) != type) break;
+                _lineBuffer.Insert(0, new Vector2Int(left, pos.y));
             }
 
-            // Scan up
-            int up = position.y + 1;
-            while (up < _board.Height)
+            for (int right = pos.x + 1; right < _board.Width; right++)
             {
-                if (_board.GetElementType(new Vector2Int(position.x, up)) != type)
-                    break;
-                _lineBuffer.Add(new Vector2Int(position.x, up));
-                up++;
+                if (_board.GetElementType(new Vector2Int(right, pos.y)) != type) break;
+                _lineBuffer.Add(new Vector2Int(right, pos.y));
             }
 
-            if (_lineBuffer.Count >= _minMatchLength)
-            {
-                return new Match(type.Value, new List<Vector2Int>(_lineBuffer), MatchOrientation.Vertical);
-            }
-
-            return default;
+            return _lineBuffer.Count >= _minMatchLength
+                ? new Match(type.Value, new List<Vector2Int>(_lineBuffer), MatchOrientation.Horizontal)
+                : default;
         }
 
-        // === PRIVATE METHODS: MERGE ===
+        private Match FindVerticalMatchAt(Vector2Int pos)
+        {
+            var type = _board.GetElementType(pos);
+            if (type == null || type == ElementType.None) return default;
 
-        /// <summary>
-        /// Merges matches that share common positions (L/T shapes).
-        /// </summary>
+            _lineBuffer.Clear();
+            _lineBuffer.Add(pos);
+
+            for (int down = pos.y - 1; down >= 0; down--)
+            {
+                if (_board.GetElementType(new Vector2Int(pos.x, down)) != type) break;
+                _lineBuffer.Insert(0, new Vector2Int(pos.x, down));
+            }
+
+            for (int up = pos.y + 1; up < _board.Height; up++)
+            {
+                if (_board.GetElementType(new Vector2Int(pos.x, up)) != type) break;
+                _lineBuffer.Add(new Vector2Int(pos.x, up));
+            }
+
+            return _lineBuffer.Count >= _minMatchLength
+                ? new Match(type.Value, new List<Vector2Int>(_lineBuffer), MatchOrientation.Vertical)
+                : default;
+        }
+
         private List<Match> MergeIntersectingMatches(List<Match> matches)
         {
-            if (matches.Count <= 1)
-                return new List<Match>(matches);
+            if (matches.Count <= 1) return new List<Match>(matches);
 
             var result = new List<Match>();
             var merged = new bool[matches.Count];
@@ -451,37 +399,27 @@ namespace Match3.Matching
             for (int i = 0; i < matches.Count; i++)
             {
                 if (merged[i]) continue;
-
                 var current = matches[i];
 
-                // Find all matches that intersect with current
                 for (int j = i + 1; j < matches.Count; j++)
                 {
-                    if (merged[j]) continue;
-                    if (matches[i].Type != matches[j].Type) continue;
-
+                    if (merged[j] || matches[i].Type != matches[j].Type) continue;
                     if (MatchesIntersect(current, matches[j]))
                     {
                         current = Match.Merge(current, matches[j]);
                         merged[j] = true;
                     }
                 }
-
                 result.Add(current);
             }
-
             return result;
         }
 
         private bool MatchesIntersect(Match a, Match b)
         {
             foreach (var posA in a.Positions)
-            {
                 foreach (var posB in b.Positions)
-                {
                     if (posA == posB) return true;
-                }
-            }
             return false;
         }
     }
@@ -510,7 +448,7 @@ namespace Match3.Matching
 
 Debug-компонент для визуализации найденных матчей. Полезен для тестирования алгоритма.
 
-### Код
+### Реализованный код
 
 ```csharp
 using System.Collections.Generic;
@@ -519,45 +457,28 @@ using Match3.Grid;
 
 namespace Match3.Matching
 {
-    /// <summary>
-    /// Debug component for visualizing found matches.
-    /// </summary>
     public class MatchHighlighter : MonoBehaviour
     {
-        // === SETTINGS ===
-
         [Header("Settings")]
         [SerializeField] private bool _showGizmos = true;
         [SerializeField] private float _highlightDuration = 1f;
-        [SerializeField] private Color _horizontalColor = new Color(1f, 0.5f, 0f, 0.7f);
-        [SerializeField] private Color _verticalColor = new Color(0f, 0.5f, 1f, 0.7f);
-        [SerializeField] private Color _crossColor = new Color(1f, 0f, 1f, 0.7f);
-
-        // === DEPENDENCIES ===
+        [SerializeField] private Color _horizontalColor = new(1f, 0.5f, 0f, 0.7f);
+        [SerializeField] private Color _verticalColor = new(0f, 0.5f, 1f, 0.7f);
+        [SerializeField] private Color _crossColor = new(1f, 0f, 1f, 0.7f);
 
         [Header("Dependencies")]
         [SerializeField] private GridComponent _grid;
         [SerializeField] private MatchFinder _matchFinder;
 
-        // === PRIVATE FIELDS ===
-
         private List<Match> _currentMatches = new();
         private float _highlightTimer;
 
-        // === PUBLIC METHODS ===
-
-        /// <summary>
-        /// Highlights matches for debugging.
-        /// </summary>
         public void HighlightMatches(List<Match> matches)
         {
             _currentMatches = matches;
             _highlightTimer = _highlightDuration;
         }
 
-        /// <summary>
-        /// Finds and highlights all matches on the board.
-        /// </summary>
         [ContextMenu("Find And Highlight All Matches")]
         public void FindAndHighlightAll()
         {
@@ -568,12 +489,8 @@ namespace Match3.Matching
 
             Debug.Log($"[MatchHighlighter] Found {matches.Count} matches:");
             foreach (var match in matches)
-            {
                 Debug.Log($"  {match}");
-            }
         }
-
-        // === UNITY CALLBACKS ===
 
         private void Update()
         {
@@ -592,7 +509,13 @@ namespace Match3.Matching
 
             foreach (var match in _currentMatches)
             {
-                Gizmos.color = GetMatchColor(match.Orientation);
+                Gizmos.color = match.Orientation switch
+                {
+                    MatchOrientation.Horizontal => _horizontalColor,
+                    MatchOrientation.Vertical => _verticalColor,
+                    MatchOrientation.Cross => _crossColor,
+                    _ => Color.white
+                };
 
                 foreach (var pos in match.Positions)
                 {
@@ -601,17 +524,6 @@ namespace Match3.Matching
                     Gizmos.DrawCube(worldPos, Vector3.one * 0.3f);
                 }
             }
-        }
-
-        private Color GetMatchColor(MatchOrientation orientation)
-        {
-            return orientation switch
-            {
-                MatchOrientation.Horizontal => _horizontalColor,
-                MatchOrientation.Vertical => _verticalColor,
-                MatchOrientation.Cross => _crossColor,
-                _ => Color.white
-            };
         }
     }
 }
@@ -627,18 +539,22 @@ namespace Match3.Matching
 
 ## 7.4 Интеграция в SwapHandler
 
-### Изменения в SwapHandler.cs
+### Изменения в SwapHandler.cs (реализовано)
 
 ```csharp
-// Добавить using
+// Добавлен using
 using Match3.Matching;
 
-// Добавить зависимость
+// Добавлена зависимость
 [Header("Dependencies")]
-// ... existing fields ...
-[SerializeField] private MatchFinder _matchFinder;
+[SerializeField] private BoardComponent _board;
+[SerializeField] private GridComponent _grid;
+[SerializeField] private InputDetector _inputDetector;
+[SerializeField] private InputBlocker _inputBlocker;
+[SerializeField] private SwapAnimator _swapAnimator;
+[SerializeField] private MatchFinder _matchFinder;  // ← NEW
 
-// Заменить метод CheckForMatch
+// Заменён метод CheckForMatch
 private bool CheckForMatch(Vector2Int posA, Vector2Int posB)
 {
     return _matchFinder.WouldCreateMatch(posA, posB);
@@ -670,7 +586,7 @@ OnSwapRequested(posA, posB)
 
 ## 7.5 MatchSystemSetup.cs (Editor)
 
-### Код
+### Реализованный код
 
 ```csharp
 #if UNITY_EDITOR
@@ -709,27 +625,27 @@ namespace Match3.Editor
                 return;
             }
 
-            var gameObject = grid.gameObject;
+            var go = grid.gameObject;
 
             // MatchFinder
-            var matchFinder = gameObject.GetComponent<MatchFinder>();
+            var matchFinder = go.GetComponent<MatchFinder>();
             if (matchFinder == null)
-                matchFinder = Undo.AddComponent<MatchFinder>(gameObject);
+                matchFinder = Undo.AddComponent<MatchFinder>(go);
 
             SetField(matchFinder, "_board", board);
 
-            // MatchHighlighter (debug)
-            var matchHighlighter = gameObject.GetComponent<MatchHighlighter>();
+            // MatchHighlighter
+            var matchHighlighter = go.GetComponent<MatchHighlighter>();
             if (matchHighlighter == null)
-                matchHighlighter = Undo.AddComponent<MatchHighlighter>(gameObject);
+                matchHighlighter = Undo.AddComponent<MatchHighlighter>(go);
 
             SetField(matchHighlighter, "_grid", grid);
             SetField(matchHighlighter, "_matchFinder", matchFinder);
 
-            // Wire SwapHandler to MatchFinder
+            // Wire SwapHandler
             SetField(swapHandler, "_matchFinder", matchFinder);
 
-            EditorUtility.SetDirty(gameObject);
+            EditorUtility.SetDirty(go);
             Debug.Log("[Match3] Match System setup complete!");
         }
 
@@ -890,19 +806,22 @@ Hint system (подсветка куда можно сходить) — отде
 
 ## Чеклист
 
-- [ ] Создать папку `Assets/Scripts/Match/`
-- [ ] `Match.cs` создан
-- [ ] `MatchFinder.cs` создан
-- [ ] `MatchHighlighter.cs` создан
-- [ ] `MatchSystemSetup.cs` создан
-- [ ] Меню Setup работает
-- [ ] MatchFinder находит горизонтальные матчи
-- [ ] MatchFinder находит вертикальные матчи
+### Код (завершено)
+- [x] Создать папку `Assets/Scripts/Match/`
+- [x] `Match.cs` создан (38 строк)
+- [x] `MatchFinder.cs` создан (201 строка)
+- [x] `MatchHighlighter.cs` создан (68 строк)
+- [x] `MatchSystemSetup.cs` создан (56 строк)
+- [x] SwapHandler интегрирован с MatchFinder
+
+### Тестирование в Unity
+- [ ] Меню `Match3 → Setup Scene → Stage 7 - Match System` работает
+- [ ] MatchFinder находит горизонтальные матчи (3+ в ряд)
+- [ ] MatchFinder находит вертикальные матчи (3+ в столбец)
 - [ ] L/T матчи объединяются в Cross
-- [ ] SwapHandler интегрирован с MatchFinder
-- [ ] Невалидный свап реверсится
-- [ ] Валидный свап не реверсится
-- [ ] MatchHighlighter показывает Gizmos
+- [ ] Невалидный свап реверсится (возврат на место)
+- [ ] Валидный свап не реверсится (остаётся)
+- [ ] MatchHighlighter показывает Gizmos (ПКМ → Find And Highlight)
 
 ---
 

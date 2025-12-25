@@ -218,10 +218,10 @@
 
 ---
 
-## Этап 7: Match Detection (Поиск матчей)
+## Этап 7: Match Detection (Поиск матчей) ✅
 
 ### 7.1 MatchFinder
-- [ ] `MatchFinder : MonoBehaviour` - алгоритм поиска
+- [x] `MatchFinder : MonoBehaviour` - алгоритм поиска
   - `List<Match> FindAllMatches()` - полный скан доски
   - `List<Match> FindMatchesAt(Vector2Int pos)` - проверка конкретной позиции
   - `bool WouldCreateMatch(Vector2Int posA, Vector2Int posB)` - для валидации свапа
@@ -230,19 +230,19 @@
   - Объединение пересекающихся матчей (L/T → Cross)
 
 ### 7.2 Match структура
-- [ ] `Match` - readonly struct данных о совпадении
+- [x] `Match` - readonly struct данных о совпадении
   - `ElementType Type`
   - `IReadOnlyList<Vector2Int> Positions`
   - `MatchOrientation Orientation` (Horizontal/Vertical/Cross)
   - `int Count`, `bool IsValid`
 
 ### 7.3 MatchHighlighter (debug)
-- [ ] Визуальная подсветка найденных матчей через Gizmos
-- [ ] Context Menu: "Find And Highlight All Matches"
+- [x] Визуальная подсветка найденных матчей через Gizmos
+- [x] Context Menu: "Find And Highlight All Matches"
 
 ### 7.4 Интеграция в SwapHandler
-- [ ] Добавить `[SerializeField] MatchFinder _matchFinder`
-- [ ] Заменить заглушку `CheckForMatch()` на реальную проверку
+- [x] Добавить `[SerializeField] MatchFinder _matchFinder`
+- [x] Заменить заглушку `CheckForMatch()` на реальную проверку
 
 **Файлы:**
 - `Assets/Scripts/Match/Match.cs`
