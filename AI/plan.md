@@ -207,11 +207,14 @@
 - [ ] Проверка: привёл ли свап к матчу?
   - Если нет → реверс свапа
   - Если да → продолжить цикл
+  - **Примечание:** Временная заглушка, реальная логика в Этапе 7
 
 **Файлы:**
 - `Assets/Scripts/Swap/SwapHandler.cs`
 - `Assets/Scripts/Swap/SwapAnimator.cs`
-- `Assets/Scripts/Swap/SwapValidator.cs`
+- `Assets/Scripts/Editor/SwapSystemSetup.cs`
+
+**Детальный план:** `AI/plan_stage6_swap.md`
 
 ---
 
