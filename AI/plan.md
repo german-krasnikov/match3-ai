@@ -410,25 +410,45 @@
 
 ## Этап 12: Scene Setup (Настройка сцены)
 
-### 12.1 GameManager Prefab
-- [ ] Root GameObject с компонентами:
-  - GridComponent
-  - BoardComponent
-  - GameLoopController
-  - InputDetector
-  - InputBlocker
+### 12.1 GameManagerSetup (Master Editor Script)
+- [ ] `GameManagerSetup.cs` — единый скрипт для полной настройки
+  - Menu: `Match3 → Setup Scene → Complete Setup (All Stages)`
+  - Menu: `Match3 → Setup Scene → Create GameManager Prefab`
+  - Menu: `Match3 → Setup Scene → Validate Setup`
 
-### 12.2 Factories & Handlers
-- [ ] Child GameObject "Systems":
-  - ElementFactory
-  - SwapHandler + SwapAnimator
-  - DestroyHandler + DestroyAnimator
-  - FallHandler + FallAnimator
-  - RefillHandler
+### 12.2 GameManager Prefab
+- [ ] `Assets/Prefabs/GameManager.prefab` — готовый prefab со всеми компонентами
 
-### 12.3 Wiring
-- [ ] Все зависимости через SerializeField
-- [ ] События связывают компоненты
+### 12.3 Структура (плоская)
+```
+GameManager (GameObject)
+├── GridComponent
+├── BoardComponent
+├── ElementPool
+├── ElementFactory
+├── InitialBoardSpawner
+├── InputBlocker
+├── InputDetector
+├── SelectionHighlighter
+├── SwapAnimator
+├── SwapHandler
+├── MatchFinder
+├── MatchHighlighter (debug, optional)
+├── DestroyAnimator
+├── DestroyHandler
+├── FallAnimator
+├── FallHandler
+├── RefillAnimator
+├── RefillHandler
+├── BoardShuffler
+└── GameLoopController
+```
+
+**Файлы:**
+- `Assets/Scripts/Editor/GameManagerSetup.cs`
+- `Assets/Prefabs/GameManager.prefab`
+
+**Детальный план:** `AI/plan_stage12_scenesetup.md`
 
 ---
 
