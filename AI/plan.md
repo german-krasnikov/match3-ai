@@ -221,27 +221,36 @@
 ## Этап 7: Match Detection (Поиск матчей)
 
 ### 7.1 MatchFinder
-- [ ] `MatchFinder` - алгоритм поиска
-  - `List<Match> FindAllMatches(BoardComponent board)`
+- [ ] `MatchFinder : MonoBehaviour` - алгоритм поиска
+  - `List<Match> FindAllMatches()` - полный скан доски
   - `List<Match> FindMatchesAt(Vector2Int pos)` - проверка конкретной позиции
+  - `bool WouldCreateMatch(Vector2Int posA, Vector2Int posB)` - для валидации свапа
   - Горизонтальный проход: 3+ подряд
   - Вертикальный проход: 3+ подряд
-  - Объединение пересекающихся матчей
+  - Объединение пересекающихся матчей (L/T → Cross)
 
 ### 7.2 Match структура
-- [ ] `Match` - данные о найденном совпадении
-  - `List<Vector2Int> positions`
-  - `ElementType type`
-  - `int Count => positions.Count`
-  - `bool IsHorizontal`, `bool IsVertical`, `bool IsCross`
+- [ ] `Match` - readonly struct данных о совпадении
+  - `ElementType Type`
+  - `IReadOnlyList<Vector2Int> Positions`
+  - `MatchOrientation Orientation` (Horizontal/Vertical/Cross)
+  - `int Count`, `bool IsValid`
 
 ### 7.3 MatchHighlighter (debug)
-- [ ] Визуальная подсветка найденных матчей для отладки
+- [ ] Визуальная подсветка найденных матчей через Gizmos
+- [ ] Context Menu: "Find And Highlight All Matches"
+
+### 7.4 Интеграция в SwapHandler
+- [ ] Добавить `[SerializeField] MatchFinder _matchFinder`
+- [ ] Заменить заглушку `CheckForMatch()` на реальную проверку
 
 **Файлы:**
-- `Assets/Scripts/Match/MatchFinder.cs`
 - `Assets/Scripts/Match/Match.cs`
+- `Assets/Scripts/Match/MatchFinder.cs`
 - `Assets/Scripts/Match/MatchHighlighter.cs`
+- `Assets/Scripts/Editor/MatchSystemSetup.cs`
+
+**Детальный план:** `AI/plan_stage7_match.md`
 
 ---
 
