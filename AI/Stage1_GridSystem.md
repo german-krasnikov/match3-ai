@@ -1,5 +1,9 @@
 # Этап 1: Grid System — Детальный план реализации
 
+## Статус: ✅ ЗАВЕРШЕНО
+
+---
+
 ## Обзор
 
 Базовая система сетки для Match-3. Отвечает за:
@@ -9,21 +13,40 @@
 
 ---
 
-## Файлы
+## Созданные файлы
 
 ```
-Assets/Scripts/Grid/
-├── GridData.cs        # ScriptableObject с параметрами
-├── Cell.cs            # Struct ячейки (минимальный, без isBlocked)
-└── GridComponent.cs   # MonoBehaviour + Gizmos
+Assets/
+├── Scripts/
+│   ├── Grid/
+│   │   ├── GridData.cs        # ScriptableObject с параметрами
+│   │   ├── Cell.cs            # Struct ячейки
+│   │   └── GridComponent.cs   # MonoBehaviour + Gizmos
+│   └── Editor/
+│       └── GridSceneSetup.cs  # Автонастройка сцены
+└── Data/
+    └── Grid/
+        └── DefaultGridData.asset  # (создаётся автоматически)
 ```
+
+---
+
+## Быстрый старт
+
+**Menu → Match3 → Setup Scene → Stage 1 - Grid System**
+
+Автоматически:
+- Создаёт GridData ассет (8x8, cellSize=1, spacing=0.1)
+- Создаёт GameObject "Grid" с GridComponent
+- Центрирует Main Camera на сетку
+- Выделяет Grid и фокусирует Scene View
 
 ---
 
 ## 1. GridData.cs — ScriptableObject
 
 ### Назначение
-Конфигурация сетки. Один ассет можно переиспользовать для разных уровней или изменять параметры без перекомпиляции.
+Конфигурация сетки. Один ассет можно переиспользовать для разных уровней.
 
 ### Код
 
@@ -47,24 +70,16 @@ namespace Match3.Grid
         public int Height => _height;
         public float CellSize => _cellSize;
         public float Spacing => _spacing;
-
-        /// <summary>
-        /// Расстояние между центрами соседних ячеек
-        /// </summary>
         public float Step => _cellSize + _spacing;
+
+        private void OnValidate()
+        {
+            _width = Mathf.Max(1, _width);
+            _height = Mathf.Max(1, _height);
+            _cellSize = Mathf.Max(0.1f, _cellSize);
+            _spacing = Mathf.Max(0f, _spacing);
+        }
     }
-}
-```
-
-### Валидация (опционально)
-
-```csharp
-private void OnValidate()
-{
-    _width = Mathf.Max(1, _width);
-    _height = Mathf.Max(1, _height);
-    _cellSize = Mathf.Max(0.1f, _cellSize);
-    _spacing = Mathf.Max(0f, _spacing);
 }
 ```
 
@@ -73,7 +88,7 @@ private void OnValidate()
 ## 2. Cell.cs — Struct
 
 ### Назначение
-Минимальная структура данных ячейки. Пока только позиция, `isBlocked` добавим позже.
+Минимальная структура данных ячейки. `isBlocked` добавим позже.
 
 ### Код
 
@@ -114,10 +129,10 @@ namespace Match3.Grid
 
 | Метод | Описание |
 |-------|----------|
-| `Vector3 GridToWorld(Vector2Int pos)` | Grid координаты → World позиция центра ячейки |
-| `Vector2Int WorldToGrid(Vector3 pos)` | World позиция → Grid координаты (округление) |
-| `bool IsValidPosition(Vector2Int pos)` | Проверка границ сетки |
-| `Cell GetCell(Vector2Int pos)` | Получить ячейку по позиции |
+| `Vector3 GridToWorld(Vector2Int pos)` | Grid → World (центр ячейки) |
+| `Vector2Int WorldToGrid(Vector3 pos)` | World → Grid |
+| `bool IsValidPosition(Vector2Int pos)` | Проверка границ |
+| `Cell GetCell(Vector2Int pos)` | Получить ячейку |
 
 ### События
 
@@ -135,29 +150,23 @@ namespace Match3.Grid
 {
     public class GridComponent : MonoBehaviour
     {
-        // === СОБЫТИЯ ===
         public event Action OnGridReady;
 
-        // === ЗАВИСИМОСТИ ===
         [Header("Configuration")]
         [SerializeField] private GridData _gridData;
 
-        // === ПРИВАТНЫЕ ПОЛЯ ===
         private Cell[,] _cells;
 
-        // === СВОЙСТВА ===
         public int Width => _gridData.Width;
         public int Height => _gridData.Height;
         public GridData Data => _gridData;
 
-        // === UNITY CALLBACKS ===
         private void Awake()
         {
             InitializeGrid();
             OnGridReady?.Invoke();
         }
 
-        // === ИНИЦИАЛИЗАЦИЯ ===
         private void InitializeGrid()
         {
             _cells = new Cell[Width, Height];
@@ -171,11 +180,6 @@ namespace Match3.Grid
             }
         }
 
-        // === ПУБЛИЧНЫЕ МЕТОДЫ ===
-
-        /// <summary>
-        /// Конвертирует grid-координаты в world-позицию (центр ячейки)
-        /// </summary>
         public Vector3 GridToWorld(Vector2Int gridPos)
         {
             float step = _gridData.Step;
@@ -187,13 +191,9 @@ namespace Match3.Grid
             return new Vector3(x, y, 0f);
         }
 
-        /// <summary>
-        /// Конвертирует world-позицию в grid-координаты
-        /// </summary>
         public Vector2Int WorldToGrid(Vector3 worldPos)
         {
             float step = _gridData.Step;
-
             Vector3 localPos = worldPos - transform.position;
 
             int x = Mathf.FloorToInt(localPos.x / step);
@@ -202,18 +202,12 @@ namespace Match3.Grid
             return new Vector2Int(x, y);
         }
 
-        /// <summary>
-        /// Проверяет, находится ли позиция в пределах сетки
-        /// </summary>
         public bool IsValidPosition(Vector2Int pos)
         {
             return pos.x >= 0 && pos.x < Width &&
                    pos.y >= 0 && pos.y < Height;
         }
 
-        /// <summary>
-        /// Получить ячейку по grid-координатам
-        /// </summary>
         public Cell GetCell(Vector2Int pos)
         {
             if (!IsValidPosition(pos))
@@ -222,23 +216,19 @@ namespace Match3.Grid
             return _cells[pos.x, pos.y];
         }
 
-        // === GIZMOS ===
         private void OnDrawGizmos()
         {
             if (_gridData == null) return;
-
-            DrawGridGizmos();
+            DrawGridGizmos(false);
         }
 
         private void OnDrawGizmosSelected()
         {
             if (_gridData == null) return;
-
-            // Более яркий цвет когда выбран
-            DrawGridGizmos(selected: true);
+            DrawGridGizmos(true);
         }
 
-        private void DrawGridGizmos(bool selected = false)
+        private void DrawGridGizmos(bool selected)
         {
             Gizmos.color = selected ? Color.cyan : new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
@@ -254,7 +244,6 @@ namespace Match3.Grid
                 }
             }
 
-            // Внешняя граница сетки
             if (selected)
             {
                 Gizmos.color = Color.yellow;
@@ -272,9 +261,6 @@ namespace Match3.Grid
             }
         }
 
-        /// <summary>
-        /// GridToWorld для Editor (когда _cells ещё не инициализирован)
-        /// </summary>
         private Vector3 GridToWorldEditor(int x, int y)
         {
             float step = _gridData.Step;
@@ -292,60 +278,113 @@ namespace Match3.Grid
 
 ---
 
-## Порядок реализации
+## 4. GridSceneSetup.cs — Editor Script
 
-| # | Задача | Время |
-|---|--------|-------|
-| 1 | Создать папку `Assets/Scripts/Grid/` | — |
-| 2 | Создать `GridData.cs` | 2 мин |
-| 3 | Создать `Cell.cs` | 1 мин |
-| 4 | Создать `GridComponent.cs` (без Gizmos) | 5 мин |
-| 5 | Добавить Gizmos | 3 мин |
-| 6 | Создать GridData ассет | 1 мин |
-| 7 | Тестирование в сцене | 3 мин |
+### Назначение
+Автоматическая настройка сцены для тестирования Grid System.
 
----
-
-## Тестирование
-
-### Ручное тестирование
-
-1. **Создать GridData ассет:**
-   - ПКМ в Project → Create → Match3 → Grid Data
-   - Установить: Width=8, Height=8, CellSize=1, Spacing=0.1
-
-2. **Создать GameObject "Grid":**
-   - Добавить `GridComponent`
-   - Назначить GridData ассет
-   - Позиционировать в (0, 0, 0)
-
-3. **Проверить Gizmos:**
-   - В Scene View должна отображаться сетка 8x8
-   - При выделении — жёлтая рамка вокруг всей сетки
-
-4. **Проверить конвертацию координат:**
-   - Временный тест-скрипт:
+### Код
 
 ```csharp
-// Временный тест (удалить после проверки)
-private void Start()
+#if UNITY_EDITOR
+using UnityEngine;
+using UnityEditor;
+using Match3.Grid;
+
+namespace Match3.Editor
 {
-    // Тест GridToWorld
-    Vector3 pos00 = GridToWorld(new Vector2Int(0, 0));
-    Vector3 pos77 = GridToWorld(new Vector2Int(7, 7));
-    Debug.Log($"Cell (0,0) → World {pos00}"); // Ожидаем: (0.5, 0.5, 0)
-    Debug.Log($"Cell (7,7) → World {pos77}"); // Ожидаем: (8.2, 8.2, 0) при step=1.1
+    public static class GridSceneSetup
+    {
+        private const string GridDataPath = "Assets/Data/Grid/DefaultGridData.asset";
+        private const string GridObjectName = "Grid";
 
-    // Тест WorldToGrid
-    Vector2Int grid = WorldToGrid(new Vector3(0.5f, 0.5f, 0f));
-    Debug.Log($"World (0.5, 0.5) → Grid {grid}"); // Ожидаем: (0, 0)
+        [MenuItem("Match3/Setup Scene/Stage 1 - Grid System")]
+        public static void SetupGridScene()
+        {
+            var gridData = GetOrCreateGridData();
+            var gridComponent = GetOrCreateGridObject(gridData);
+            SetupCamera(gridData);
 
-    // Тест IsValidPosition
-    Debug.Log($"IsValid(0,0): {IsValidPosition(new Vector2Int(0, 0))}");   // true
-    Debug.Log($"IsValid(7,7): {IsValidPosition(new Vector2Int(7, 7))}");   // true
-    Debug.Log($"IsValid(8,8): {IsValidPosition(new Vector2Int(8, 8))}");   // false
-    Debug.Log($"IsValid(-1,0): {IsValidPosition(new Vector2Int(-1, 0))}"); // false
+            Selection.activeGameObject = gridComponent.gameObject;
+            SceneView.lastActiveSceneView?.FrameSelected();
+
+            Debug.Log("[Match3] Grid System setup complete!");
+        }
+
+        private static GridData GetOrCreateGridData()
+        {
+            var gridData = AssetDatabase.LoadAssetAtPath<GridData>(GridDataPath);
+
+            if (gridData == null)
+            {
+                gridData = ScriptableObject.CreateInstance<GridData>();
+
+                if (!AssetDatabase.IsValidFolder("Assets/Data"))
+                    AssetDatabase.CreateFolder("Assets", "Data");
+                if (!AssetDatabase.IsValidFolder("Assets/Data/Grid"))
+                    AssetDatabase.CreateFolder("Assets/Data", "Grid");
+
+                AssetDatabase.CreateAsset(gridData, GridDataPath);
+                AssetDatabase.SaveAssets();
+
+                Debug.Log($"[Match3] Created GridData at {GridDataPath}");
+            }
+
+            return gridData;
+        }
+
+        private static GridComponent GetOrCreateGridObject(GridData gridData)
+        {
+            var existingGrid = Object.FindFirstObjectByType<GridComponent>();
+
+            if (existingGrid != null)
+            {
+                var so = new SerializedObject(existingGrid);
+                so.FindProperty("_gridData").objectReferenceValue = gridData;
+                so.ApplyModifiedProperties();
+
+                Debug.Log("[Match3] Updated existing Grid object");
+                return existingGrid;
+            }
+
+            var gridObject = new GameObject(GridObjectName);
+            gridObject.transform.position = Vector3.zero;
+
+            var gridComponent = gridObject.AddComponent<GridComponent>();
+
+            var serializedObject = new SerializedObject(gridComponent);
+            serializedObject.FindProperty("_gridData").objectReferenceValue = gridData;
+            serializedObject.ApplyModifiedProperties();
+
+            Undo.RegisterCreatedObjectUndo(gridObject, "Create Grid");
+
+            Debug.Log("[Match3] Created Grid object");
+            return gridComponent;
+        }
+
+        private static void SetupCamera(GridData gridData)
+        {
+            var camera = Camera.main;
+            if (camera == null) return;
+
+            float step = gridData.Step;
+
+            float centerX = gridData.Width * step * 0.5f - gridData.Spacing * 0.5f;
+            float centerY = gridData.Height * step * 0.5f - gridData.Spacing * 0.5f;
+
+            camera.transform.position = new Vector3(centerX, centerY, -10f);
+
+            if (camera.orthographic)
+            {
+                float gridHeight = gridData.Height * step;
+                camera.orthographicSize = gridHeight * 0.6f;
+            }
+
+            Debug.Log("[Match3] Camera positioned to grid center");
+        }
+    }
 }
+#endif
 ```
 
 ---
@@ -353,21 +392,16 @@ private void Start()
 ## Диаграмма координат
 
 ```
-World Y ↑
-        │
-   7.15 ┤  ┌───┐ ┌───┐ ┌───┐ ...  (y=7)
-        │  │   │ │   │ │   │
-   6.05 ┤  └───┘ └───┘ └───┘
-        │
-   ...  │  ...
-        │
-   1.05 ┤  ┌───┐ ┌───┐ ┌───┐ ...  (y=1)
-        │  │   │ │   │ │   │
-   0.0  ┤──└───┘─└───┘─└───┘──────→ World X
-        │  (0,0) (1,0) (2,0)
-        0  0.5  1.1  1.6  2.2
-           ↑
-           transform.position = (0,0)
+         Y ↑
+           │
+     (0,7) │ ┌───┐ ┌───┐ ... ┌───┐ (7,7)
+           │ └───┘ └───┘     └───┘
+           │   ...
+     (0,0) │ ┌───┐ ┌───┐ ... ┌───┐ (7,0)
+           │ └───┘ └───┘     └───┘
+         ──┼─────────────────────────→ X
+           │
+     transform.position = (0,0)
 
 step = cellSize + spacing = 1.0 + 0.1 = 1.1
 Центр ячейки (0,0) = (0.5, 0.5)
@@ -376,11 +410,32 @@ step = cellSize + spacing = 1.0 + 0.1 = 1.1
 
 ---
 
+## Gizmos
+
+- **Не выделен:** серая полупрозрачная сетка
+- **Выделен:** cyan ячейки + жёлтая внешняя рамка
+
+---
+
+## Использование в следующих этапах
+
+```csharp
+// Позиционирование элемента
+element.transform.position = _grid.GridToWorld(gridPos);
+
+// Клик → ячейка
+Vector2Int cell = _grid.WorldToGrid(clickWorldPos);
+if (_grid.IsValidPosition(cell))
+{
+    // обработка
+}
+
+// Подписка на готовность
+_grid.OnGridReady += OnGridInitialized;
+```
+
+---
+
 ## Следующий этап
 
-После завершения Grid System переходим к **Этап 2: Elements** — типы элементов, спрайты, ElementComponent.
-
-Grid System будет использоваться для:
-- Позиционирования элементов: `element.transform.position = _grid.GridToWorld(gridPos)`
-- Определения ячейки по клику: `var cell = _grid.WorldToGrid(clickWorldPos)`
-- Валидации ходов: `_grid.IsValidPosition(targetPos)`
+**Этап 2: Elements** — ElementType, ElementData, ElementComponent, ElementDatabase
