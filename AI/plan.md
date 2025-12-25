@@ -278,6 +278,8 @@
 - `Assets/Scripts/Destroy/DestroyHandler.cs`
 - `Assets/Scripts/Destroy/DestroyAnimator.cs`
 
+**Детальный план:** `AI/plan_stage8_destroy.md`
+
 ---
 
 ## Этап 9: Fall System (Падение)
