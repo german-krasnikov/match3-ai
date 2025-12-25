@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Match3.Grid;
 using Match3.Elements;
+using Match3.Board;
 
 namespace Match3.Spawn
 {
@@ -12,6 +13,7 @@ namespace Match3.Spawn
 
         [SerializeField] private GridComponent _grid;
         [SerializeField] private ElementFactory _factory;
+        [SerializeField] private BoardComponent _board;
         [SerializeField] private bool _spawnOnStart = true;
 
         private ElementComponent[,] _spawnedElements;
@@ -35,6 +37,9 @@ namespace Match3.Spawn
                     SpawnAt(x, y);
                 }
             }
+
+            if (_board != null)
+                _board.Initialize(_spawnedElements);
 
             OnSpawnCompleted?.Invoke();
         }
