@@ -1,5 +1,13 @@
 # Step 1: Core/Interfaces - План реализации
 
+> **Статус: ✅ ЗАВЕРШЁН**
+>
+> Дата: 2024
+> Файлов создано: 11
+> Namespace: `Match3.Core`
+
+---
+
 ## Цель
 Создать фундамент системы: все интерфейсы, структуры данных и enum-ы, которые обеспечат независимость модулей.
 
@@ -498,19 +506,19 @@ namespace Match3.Core
 
 ## Чеклист реализации
 
-- [ ] Создать папку `Assets/Scripts/Core/`
-- [ ] Создать папку `Assets/Scripts/Core/Interfaces/`
-- [ ] Реализовать `GridPosition.cs`
-- [ ] Реализовать `PieceType.cs`
-- [ ] Реализовать `IPiece.cs`
-- [ ] Реализовать `IGrid.cs`
-- [ ] Реализовать `IBoardState.cs`
-- [ ] Реализовать `IMatchChecker.cs`
-- [ ] Реализовать `IMatchDetector.cs`
-- [ ] Реализовать `ISpawner.cs`
-- [ ] Реализовать `ISwappable.cs`
-- [ ] Реализовать `IScoreHandler.cs`
-- [ ] Реализовать `IGameEvents.cs`
+- [x] Создать папку `Assets/Scripts/Core/`
+- [x] Создать папку `Assets/Scripts/Core/Interfaces/`
+- [x] Реализовать `GridPosition.cs`
+- [x] Реализовать `PieceType.cs`
+- [x] Реализовать `IPiece.cs`
+- [x] Реализовать `IGrid.cs`
+- [x] Реализовать `IBoardState.cs`
+- [x] Реализовать `IMatchChecker.cs`
+- [x] Реализовать `IMatchDetector.cs`
+- [x] Реализовать `ISpawner.cs`
+- [x] Реализовать `ISwappable.cs`
+- [x] Реализовать `IScoreHandler.cs`
+- [x] Реализовать `IGameEvents.cs`
 - [ ] Проверить компиляцию в Unity
 
 ---
@@ -535,3 +543,43 @@ namespace Match3.Core
 ## Время выполнения
 
 ~15-20 минут (чистый код без логики, только контракты)
+
+---
+
+## Результат реализации
+
+### Созданные файлы
+
+| Файл | Путь | Описание |
+|------|------|----------|
+| `GridPosition.cs` | `Assets/Scripts/Core/` | readonly struct с координатами, навигацией, IEquatable |
+| `PieceType.cs` | `Assets/Scripts/Core/` | enum (None + 6 типов) + extensions |
+| `IPiece.cs` | `Assets/Scripts/Core/Interfaces/` | Type, Position, GameObject, SetWorldPosition, OnDestroyed |
+| `IGrid.cs` | `Assets/Scripts/Core/Interfaces/` | Width, Height, GridToWorld, WorldToGrid, IsValidPosition |
+| `IBoardState.cs` | `Assets/Scripts/Core/Interfaces/` | Get/Set/Clear pieces, AllPositions, OnBoardChanged |
+| `IMatchChecker.cs` | `Assets/Scripts/Core/Interfaces/` | WouldCreateMatch (для спауна) |
+| `IMatchDetector.cs` | `Assets/Scripts/Core/Interfaces/` | FindAllMatches, HasMatchAt, FindMatchAt + MatchResult struct |
+| `ISpawner.cs` | `Assets/Scripts/Core/Interfaces/` | Spawn, SpawnRandom, SpawnRandomNoMatch, Despawn |
+| `ISwappable.cs` | `Assets/Scripts/Core/Interfaces/` | CanSwap, Position |
+| `IScoreHandler.cs` | `Assets/Scripts/Core/Interfaces/` | CurrentScore, AddScore, Reset, OnScoreChanged |
+| `IGameEvents.cs` | `Assets/Scripts/Core/Interfaces/` | OnGameStarted/Ended, OnTurnStarted/Ended, OnCascade |
+
+### Ключевые особенности реализации
+
+1. **GridPosition** — `readonly struct` с `IEquatable<T>` для производительности в коллекциях
+2. **MatchResult** — вынесен в `IMatchDetector.cs` как дополнительный struct
+3. **Все интерфейсы минималистичны** — следуют ISP (Interface Segregation Principle)
+4. **Event-driven** — события в IPiece, IBoardState, ISpawner, IScoreHandler, IGameEvents
+
+### Готовность к следующим шагам
+
+| Step | Готовые интерфейсы |
+|------|-------------------|
+| Step 2 (Grid) | `IGrid`, `GridPosition` |
+| Step 3 (Pieces) | `IPiece`, `PieceType`, `ISwappable` |
+| Step 4 (Spawner) | `ISpawner`, `IMatchChecker` |
+| Step 5 (Match) | `IMatchDetector`, `IMatchChecker`, `MatchResult` |
+| Step 6 (Destruction) | `IScoreHandler` |
+| Step 7 (Gravity) | `IBoardState`, `ISpawner` |
+| Step 8 (Swap) | `ISwappable` |
+| Step 9 (Game Loop) | `IGameEvents`, `IBoardState` |
