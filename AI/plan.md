@@ -10,6 +10,76 @@
 
 ---
 
+## Progress (Прогресс реализации)
+
+| Step | Название | Статус | Файлы |
+|------|----------|--------|-------|
+| 1 | Grid System | ✅ DONE | 14 файлов |
+| 2 | Pieces | ✅ DONE | 3 файла |
+| 3 | Spawner | ⏳ TODO | — |
+| 4 | Gravity/Fall | ⏳ TODO | — |
+| 5 | Swap | ⏳ TODO | — |
+| 6 | Match/Destroy | ⏳ TODO | — |
+| 7 | Game Loop | ⏳ TODO | — |
+
+### Реализованные файлы
+
+```
+Assets/Scripts/
+├── Core/                          # Step 1 ✅
+│   ├── GridPosition.cs
+│   ├── PieceType.cs
+│   └── Interfaces/
+│       ├── IPiece.cs
+│       ├── IGrid.cs
+│       ├── IBoardState.cs
+│       ├── IMatchChecker.cs
+│       ├── IMatchDetector.cs
+│       ├── ISpawner.cs
+│       ├── ISwappable.cs
+│       ├── IScoreHandler.cs
+│       └── IGameEvents.cs
+│
+├── Grid/                          # Step 1 ✅
+│   ├── GridConfig.cs              # SO: 8x8, cellSize, spacing
+│   ├── CellComponent.cs           # Ячейка сетки
+│   └── GridComponent.cs           # IGrid + IBoardState
+│
+├── Pieces/                        # Step 2 ✅
+│   ├── PieceConfig.cs             # SO: спрайты, цвета
+│   ├── PieceView.cs               # Только визуал
+│   └── PieceComponent.cs          # IPiece implementation
+│
+└── Editor/
+    ├── Step1_GridSetup.cs         # Setup меню
+    └── Step2_PiecesSetup.cs       # Setup меню
+
+Assets/Configs/
+├── GridConfig.asset               # ✅
+└── PieceConfig.asset              # ✅
+
+Assets/Prefabs/
+├── Grid.prefab                    # ✅
+├── Cell.prefab                    # ✅
+└── Pieces/
+    └── Piece.prefab               # ✅
+
+Assets/Sprites/
+└── WhiteSquare.png                # ✅ 64x64 белый квадрат
+```
+
+### Editor Commands
+
+| Команда | Описание |
+|---------|----------|
+| `Match3/Setup/Step 1 - Create Grid Assets` | GridConfig, Cell, Grid prefabs |
+| `Match3/Setup/Step 1 - Create Grid in Scene` | Спавн сетки 8x8 |
+| `Match3/Setup/Step 2 - Create Pieces Assets` | PieceConfig, Piece prefab |
+| `Match3/Setup/Step 2 - Test Piece in Scene` | Тест 6 фишек |
+| `Match3/Setup/Step 1+2 - Full Scene Setup` | Всё вместе |
+
+---
+
 ## 1. Grid System (Сетка)
 
 ### 1.1 Структуры данных

@@ -1,5 +1,13 @@
 # Step 2: Pieces (Элементы) - Детальный План Реализации
 
+> **Статус: ✅ ЗАВЕРШЁН**
+>
+> Дата: 2024-12-27
+> Файлов создано: 3
+> Namespace: `Match3.Pieces`
+
+---
+
 ## Предусловия (Step 1 выполнен)
 
 Уже реализовано в `Assets/Scripts/Core/`:
@@ -290,19 +298,19 @@ Piece (GameObject)
 ## Чеклист
 
 ### Код:
-- [ ] `Assets/Scripts/Pieces/PieceConfig.cs`
-- [ ] `Assets/Scripts/Pieces/PieceView.cs`
-- [ ] `Assets/Scripts/Pieces/PieceComponent.cs`
+- [x] `Assets/Scripts/Pieces/PieceConfig.cs`
+- [x] `Assets/Scripts/Pieces/PieceView.cs`
+- [x] `Assets/Scripts/Pieces/PieceComponent.cs`
 
 ### Assets:
-- [ ] `Assets/Configs/PieceConfig.asset`
-- [ ] `Assets/Prefabs/Pieces/Piece.prefab`
-- [ ] Sorting Layer "Pieces"
+- [x] `Assets/Configs/PieceConfig.asset`
+- [x] `Assets/Prefabs/Pieces/Piece.prefab`
+- [x] Sorting Layer "Pieces"
 
 ### Валидация:
-- [ ] `PieceComponent` компилируется без ошибок
-- [ ] Префаб корректно отображает спрайт/цвет
-- [ ] `Initialize()` работает с PieceConfig
+- [x] `PieceComponent` компилируется без ошибок
+- [x] Префаб корректно отображает спрайт/цвет
+- [x] `Initialize()` работает с PieceConfig
 
 ---
 
