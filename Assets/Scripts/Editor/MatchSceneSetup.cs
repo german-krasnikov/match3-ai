@@ -28,6 +28,15 @@ namespace Match3.Editor
                 spawn = Object.FindFirstObjectByType<SpawnComponent>();
             }
 
+            // Disable SpawnTester auto-fill (MatchTester will handle it)
+            var spawnTester = grid.gameObject.GetComponent<SpawnTester>();
+            if (spawnTester != null)
+            {
+                var spawnTesterSo = new SerializedObject(spawnTester);
+                spawnTesterSo.FindProperty("_fillOnStart").boolValue = false;
+                spawnTesterSo.ApplyModifiedPropertiesWithoutUndo();
+            }
+
             // Add MatchDetectionComponent
             var matchDetection = grid.gameObject.GetComponent<MatchDetectionComponent>();
             if (matchDetection == null)
@@ -52,12 +61,17 @@ namespace Match3.Editor
             testerSo.FindProperty("_grid").objectReferenceValue = grid;
             testerSo.FindProperty("_spawn").objectReferenceValue = spawn;
             testerSo.FindProperty("_matchDetection").objectReferenceValue = matchDetection;
+            testerSo.FindProperty("_fillGridOnStart").boolValue = true;
+            testerSo.FindProperty("_testMatchesOnStart").boolValue = true;
             testerSo.ApplyModifiedPropertiesWithoutUndo();
 
             EditorUtility.SetDirty(grid.gameObject);
             Selection.activeGameObject = grid.gameObject;
 
-            Debug.Log("Step 5 Match Detection setup complete. Press Play to test.");
+            Debug.Log("[Step 5] Match Detection setup complete!\n" +
+                      "- MatchDetectionComponent added\n" +
+                      "- MatchTester added (will fill grid and test on Play)\n" +
+                      "Press Play to test. Console will show match count.");
         }
 
         [MenuItem("Match3/Test/Find All Matches (Play Mode)")]
