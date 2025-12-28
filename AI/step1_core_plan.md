@@ -1,6 +1,6 @@
 # Step 1: CORE - Интерфейсы и Enums
 
-> **Статус:** План реализации
+> **Статус:** ✅ ВЫПОЛНЕНО
 > **Зависимости:** Нет (первый модуль)
 > **Зависят от этого:** Все остальные модули (2-9)
 
@@ -294,19 +294,19 @@ namespace Match3.Core
 
 ## Чеклист реализации
 
-- [ ] Создать папку `Assets/Scripts/Core/`
-- [ ] Создать папку `Assets/Scripts/Core/Interfaces/`
-- [ ] Создать `ElementType.cs`
-- [ ] Создать `GameState.cs`
-- [ ] Создать `IGridElement.cs`
-- [ ] Создать `IGrid.cs`
-- [ ] Создать `IElementFactory.cs`
-- [ ] Создать `ISpawnSystem.cs`
-- [ ] Создать `IMatchDetection.cs`
-- [ ] Создать `ISwapSystem.cs`
-- [ ] Создать `IDestructionSystem.cs`
-- [ ] Создать `IGravitySystem.cs`
-- [ ] Проверить компиляцию в Unity
+- [x] Создать папку `Assets/Scripts/Core/`
+- [x] Создать папку `Assets/Scripts/Core/Interfaces/`
+- [x] Создать `ElementType.cs`
+- [x] Создать `GameState.cs`
+- [x] Создать `IGridElement.cs`
+- [x] Создать `IGrid.cs`
+- [x] Создать `IElementFactory.cs`
+- [x] Создать `ISpawnSystem.cs`
+- [x] Создать `IMatchDetection.cs`
+- [x] Создать `ISwapSystem.cs`
+- [x] Создать `IDestructionSystem.cs`
+- [x] Создать `IGravitySystem.cs`
+- [ ] Проверить компиляцию в Unity (требует открытия Unity)
 
 ---
 
