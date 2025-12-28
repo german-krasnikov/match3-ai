@@ -3,6 +3,7 @@ using UnityEngine;
 using Match3.Core;
 using Match3.Grid;
 using Match3.Spawn;
+using Match3.Destruction;
 
 namespace Match3.Match
 {
@@ -11,6 +12,7 @@ namespace Match3.Match
         [SerializeField] private GridComponent _grid;
         [SerializeField] private SpawnComponent _spawn;
         [SerializeField] private MatchDetectionComponent _matchDetection;
+        [SerializeField] private DestructionComponent _destruction;
 
         [Header("Test Settings")]
         [SerializeField] private bool _fillGridOnStart = true;
@@ -82,6 +84,25 @@ namespace Match3.Match
                     if (sr != null)
                         sr.color = Color.white; // Подсветка
                 }
+            }
+        }
+
+        [ContextMenu("Find And Destroy Matches")]
+        public async void FindAndDestroyMatches()
+        {
+            if (_destruction == null)
+            {
+                Debug.LogError("[MatchTester] DestructionComponent not assigned!");
+                return;
+            }
+
+            var matches = _matchDetection.FindAllMatches();
+            Debug.Log($"[MatchTester] Found {matches.Count} matches");
+
+            if (matches.Count > 0)
+            {
+                await _destruction.DestroyElements(matches);
+                Debug.Log("[MatchTester] Matches destroyed!");
             }
         }
     }

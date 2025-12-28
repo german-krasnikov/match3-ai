@@ -139,6 +139,8 @@ GameObject:
   - component: {fileID: 457303923}
   - component: {fileID: 457303922}
   - component: {fileID: 457303921}
+  - component: {fileID: 457303925}
+  - component: {fileID: 457303924}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -223,6 +225,7 @@ MonoBehaviour:
   _grid: {fileID: 457303915}
   _spawn: {fileID: 457303918}
   _matchDetection: {fileID: 457303920}
+  _destruction: {fileID: 457303925}
   _fillGridOnStart: 0
   _testMatchesOnStart: 0
 --- !u!114 &457303920
@@ -286,6 +289,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grid: {fileID: 457303915}
   _camera: {fileID: 519420031}
+  _minDragDistance: 0.3
+--- !u!114 &457303924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457303914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5adedd4057e414b45893dfe715fe4f21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _destruction: {fileID: 457303925}
+  _grid: {fileID: 457303915}
+  _spawn: {fileID: 457303918}
+  _testPositions:
+  - {x: 0, y: 0}
+  - {x: 1, y: 1}
+  - {x: 2, y: 2}
+  - {x: 3, y: 3}
+  - {x: 4, y: 4}
+--- !u!114 &457303925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457303914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b2c9e65410f54dd7908bce8a6ba483f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _destroyDuration: 0.2
+  _scaleEase: 26
+  _grid: {fileID: 457303915}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
