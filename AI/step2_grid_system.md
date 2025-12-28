@@ -1,6 +1,6 @@
 # Step 2: GRID SYSTEM — Детальный план реализации
 
-> **Статус:** В работе
+> **Статус:** ГОТОВО
 > **Зависит от:** Step 1 (Core — интерфейсы IGrid, IGridElement)
 > **Блокирует:** Steps 3, 4, 5, 6, 7, 8, 9
 
@@ -243,38 +243,38 @@ namespace Match3.Grid
 ## Подзадачи (чеклист)
 
 ### 2.1 Базовая структура
-- [ ] Создать папку `Assets/Scripts/Grid/`
-- [ ] Создать `GridComponent.cs`
-- [ ] Добавить namespace `Match3.Grid`
-- [ ] Реализовать `IGrid` интерфейс
+- [x] Создать папку `Assets/Scripts/Grid/`
+- [x] Создать `GridComponent.cs`
+- [x] Добавить namespace `Match3.Grid`
+- [x] Реализовать `IGrid` интерфейс
 
 ### 2.2 Хранилище данных
-- [ ] Приватный 2D массив `IGridElement[,] _grid`
-- [ ] `InitializeGrid()` в `Awake()`
-- [ ] Публичные readonly свойства Width, Height, CellSize
+- [x] Приватный 2D массив `IGridElement[,] _grid`
+- [x] `InitializeGrid()` в `Awake()`
+- [x] Публичные readonly свойства Width, Height, CellSize
 
 ### 2.3 Конвертация координат
-- [ ] `GridToWorld()` — возвращает центр ячейки
-- [ ] `WorldToGrid()` — округление вниз через `Mathf.FloorToInt`
-- [ ] Учёт `_origin` смещения
+- [x] `GridToWorld()` — возвращает центр ячейки
+- [x] `WorldToGrid()` — округление вниз через `Mathf.FloorToInt`
+- [x] Учёт `_origin` смещения
 
 ### 2.4 CRUD операции
-- [ ] `GetElementAt()` — с проверкой границ
-- [ ] `SetElementAt()` — обновляет GridPosition элемента, вызывает событие
-- [ ] `ClearCell()` — null + событие
+- [x] `GetElementAt()` — с проверкой границ
+- [x] `SetElementAt()` — обновляет GridPosition элемента, вызывает событие
+- [x] `ClearCell()` — null + событие
 
 ### 2.5 Валидация
-- [ ] `IsValidPosition()` — проверка x/y в пределах 0..Width-1, 0..Height-1
+- [x] `IsValidPosition()` — проверка x/y в пределах 0..Width-1, 0..Height-1
 
 ### 2.6 События
-- [ ] `OnElementPlaced` — при SetElementAt (если element != null)
-- [ ] `OnCellCleared` — при ClearCell
+- [x] `OnElementPlaced` — при SetElementAt (если element != null)
+- [x] `OnCellCleared` — при ClearCell
 
 ### 2.7 Debug Gizmos
-- [ ] Отрисовка сетки линиями
-- [ ] Подсветка заполненных ячеек
-- [ ] Toggle через `_showGizmos`
-- [ ] Только в Editor (`#if UNITY_EDITOR`)
+- [x] Отрисовка сетки линиями
+- [x] Подсветка заполненных ячеек
+- [x] Toggle через `_showGizmos`
+- [x] Только в Editor (`#if UNITY_EDITOR`)
 
 ### 2.8 Тестирование
 - [ ] Создать пустой GameObject "Grid" в сцене
@@ -363,9 +363,9 @@ void TestGridConversion()
 
 ## Критерии готовности
 
-- [ ] `GridComponent` компилируется без ошибок
-- [ ] Реализованы все методы интерфейса `IGrid`
-- [ ] Конвертация координат работает корректно
-- [ ] Gizmos отображаются в Scene View
-- [ ] События вызываются при изменении данных
-- [ ] Код соответствует Unity Way (SerializeField, события, single responsibility)
+- [x] `GridComponent` компилируется без ошибок
+- [x] Реализованы все методы интерфейса `IGrid`
+- [x] Конвертация координат работает корректно
+- [x] Gizmos отображаются в Scene View
+- [x] События вызываются при изменении данных
+- [x] Код соответствует Unity Way (SerializeField, события, single responsibility)
