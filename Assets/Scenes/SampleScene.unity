@@ -141,6 +141,8 @@ GameObject:
   - component: {fileID: 457303921}
   - component: {fileID: 457303925}
   - component: {fileID: 457303924}
+  - component: {fileID: 457303927}
+  - component: {fileID: 457303926}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -326,6 +328,37 @@ MonoBehaviour:
   _destroyDuration: 0.2
   _scaleEase: 26
   _grid: {fileID: 457303915}
+--- !u!114 &457303926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457303914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c00c4bc6983c4e2b94ec2011c2abad8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _gridComponent: {fileID: 457303915}
+  _gravityComponent: {fileID: 457303927}
+  _camera: {fileID: 519420031}
+--- !u!114 &457303927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457303914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b8ad4b4142094409bf1967b01d1d09f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _gridComponent: {fileID: 457303915}
+  _spawnComponent: {fileID: 457303918}
+  _fallDuration: 0.3
+  _fallEase: 30
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

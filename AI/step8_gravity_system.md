@@ -429,14 +429,16 @@ private async Task ProcessCascade()
 
 ## Чеклист реализации
 
-- [ ] Создать папку `Assets/Scripts/Gravity/`
-- [ ] Создать `GravityComponent.cs`
-- [ ] Реализовать `HasEmptyCells()`
-- [ ] Реализовать `ApplyGravity()` с параллельной обработкой колонок
-- [ ] Реализовать `FallExistingElements()` — падение существующих
-- [ ] Реализовать `SpawnNewElements()` — спаун новых сверху
-- [ ] Реализовать `AnimateFall()` с DOTween
-- [ ] Добавить события `OnGravityStarted` / `OnGravityCompleted`
+- [x] Создать папку `Assets/Scripts/Gravity/`
+- [x] Создать `GravityComponent.cs`
+- [x] Реализовать `HasEmptyCells()`
+- [x] Реализовать `ApplyGravity()` с параллельной обработкой колонок
+- [x] Реализовать `FallExistingElements()` — падение существующих
+- [x] Реализовать `SpawnNewElements()` — спаун новых сверху
+- [x] Реализовать `AnimateFall()` с DOTween
+- [x] Добавить события `OnGravityStarted` / `OnGravityCompleted`
+- [x] Создать `GravityTester.cs` для тестирования
+- [x] Создать `GravitySceneSetup.cs` Editor скрипт
 - [ ] Протестировать с ручным удалением элементов
 - [ ] Проверить edge cases (пустая колонка, множественные дыры)
 
