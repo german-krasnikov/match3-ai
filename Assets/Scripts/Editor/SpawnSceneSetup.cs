@@ -1,60 +1,82 @@
 using UnityEngine;
 using UnityEditor;
 using Match3.Spawn;
+using Match3.Grid;
+using Match3.Elements;
 
 namespace Match3.Editor
 {
-    /// <summary>
-    /// Editor utility для настройки тестовой сцены Spawn System.
-    /// </summary>
     public static class SpawnSceneSetup
     {
-        [MenuItem("Match3/Setup/3. Setup Spawn System")]
-        public static void SetupSpawnSystem()
+        [MenuItem("Match3/Setup Step 4 - Spawn")]
+        public static void SetupSpawnScene()
         {
-            // Находим Grid
-            var grid = Object.FindFirstObjectByType<Grid.GridComponent>();
+            // Ensure Grid is set up
+            var grid = Object.FindFirstObjectByType<GridComponent>();
             if (grid == null)
             {
-                Debug.LogError("GridComponent not found! Run 'Match3/Setup/1. Setup Grid' first.");
-                return;
+                Debug.Log("Grid not found, running Grid setup...");
+                GridSceneSetup.SetupGridScene();
+                grid = Object.FindFirstObjectByType<GridComponent>();
             }
 
-            // Находим Factory
-            var factory = Object.FindFirstObjectByType<Elements.ElementFactoryComponent>();
+            // Ensure Elements are set up
+            var factory = Object.FindFirstObjectByType<ElementFactoryComponent>();
             if (factory == null)
             {
-                Debug.LogError("ElementFactoryComponent not found! Run 'Match3/Setup/2. Setup Elements' first.");
-                return;
+                Debug.Log("ElementFactory not found, running Elements setup...");
+                ElementSceneSetup.SetupElementsScene();
+                factory = Object.FindFirstObjectByType<ElementFactoryComponent>();
             }
 
-            // Создаём SpawnComponent на том же объекте что и Grid
+            // Add SpawnComponent to Grid object
             var spawn = grid.gameObject.GetComponent<SpawnComponent>();
             if (spawn == null)
             {
-                spawn = grid.gameObject.AddComponent<SpawnComponent>();
+                spawn = Undo.AddComponent<SpawnComponent>(grid.gameObject);
             }
 
-            // Связываем зависимости через SerializedObject
+            // Link dependencies
             var so = new SerializedObject(spawn);
             so.FindProperty("_gridComponent").objectReferenceValue = grid;
             so.FindProperty("_factoryComponent").objectReferenceValue = factory;
-            so.ApplyModifiedProperties();
+            so.ApplyModifiedPropertiesWithoutUndo();
 
-            // Добавляем тестовый компонент
+            // Add SpawnTester
             var tester = grid.gameObject.GetComponent<SpawnTester>();
             if (tester == null)
             {
-                tester = grid.gameObject.AddComponent<SpawnTester>();
+                tester = Undo.AddComponent<SpawnTester>(grid.gameObject);
             }
 
             var testerSo = new SerializedObject(tester);
             testerSo.FindProperty("_spawn").objectReferenceValue = spawn;
-            testerSo.ApplyModifiedProperties();
+            testerSo.ApplyModifiedPropertiesWithoutUndo();
 
             EditorUtility.SetDirty(grid.gameObject);
+            Selection.activeGameObject = grid.gameObject;
 
-            Debug.Log("Spawn System setup complete! Press Play and press Space to fill grid.");
+            Debug.Log("Step 4 Spawn setup complete. Press Play → Space to fill grid.");
+        }
+
+        [MenuItem("Match3/Test/Fill Grid Now (Editor)")]
+        public static void TestFillGridInEditor()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarning("Enter Play mode first, then press Space to fill grid.");
+                return;
+            }
+
+            var spawn = Object.FindFirstObjectByType<SpawnComponent>();
+            if (spawn == null)
+            {
+                Debug.LogError("SpawnComponent not found! Run setup first.");
+                return;
+            }
+
+            spawn.FillGrid();
+            Debug.Log("Grid filled!");
         }
     }
 }

@@ -4,39 +4,19 @@ namespace Match3.Spawn
 {
     /// <summary>
     /// Тестовый компонент для проверки SpawnComponent.
-    /// Нажмите Space для заполнения сетки.
     /// </summary>
     public class SpawnTester : MonoBehaviour
     {
         [SerializeField] private SpawnComponent _spawn;
+        [SerializeField] private bool _fillOnStart = true;
 
-        private bool _filled;
-
-        private void OnEnable()
+        private void Start()
         {
-            if (_spawn != null)
-                _spawn.OnGridFilled += OnGridFilled;
-        }
-
-        private void OnDisable()
-        {
-            if (_spawn != null)
-                _spawn.OnGridFilled -= OnGridFilled;
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Space) && !_filled)
+            if (_fillOnStart && _spawn != null)
             {
-                Debug.Log("Filling grid...");
                 _spawn.FillGrid();
+                Debug.Log("Grid filled! Check visually for no 3+ matches.");
             }
-        }
-
-        private void OnGridFilled()
-        {
-            _filled = true;
-            Debug.Log("Grid filled! Check visually for no 3+ matches.");
         }
     }
 }

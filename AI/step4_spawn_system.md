@@ -1,6 +1,6 @@
 # Step 4: SPAWN SYSTEM - Система спауна элементов
 
-> **Статус:** План реализации
+> **Статус:** ✅ РЕАЛИЗОВАНО
 > **Зависимости:** Core (интерфейсы), Grid (GridComponent), Elements (ElementFactoryComponent)
 > **Выход:** SpawnComponent — заполнение сетки без начальных матчей
 
@@ -312,21 +312,21 @@ _spawn.OnGridFilled += StartGame;  // Подписка на событие
 ## Подзадачи
 
 ### Этап 1: Базовая структура
-- [ ] Создать папку `Assets/Scripts/Spawn/`
-- [ ] Создать `SpawnComponent.cs` с базовой структурой
-- [ ] Добавить SerializeField зависимости
+- [x] Создать папку `Assets/Scripts/Spawn/`
+- [x] Создать `SpawnComponent.cs` с базовой структурой
+- [x] Добавить SerializeField зависимости
 
 ### Этап 2: Основная логика
-- [ ] Реализовать `GetRandomTypeWithoutMatch()`
-- [ ] Реализовать `SpawnAt()` с интеграцией Grid + Factory
-- [ ] Реализовать `FillGrid()` с правильным порядком обхода
+- [x] Реализовать `GetRandomTypeWithoutMatch()`
+- [x] Реализовать `SpawnAt()` с интеграцией Grid + Factory
+- [x] Реализовать `FillGrid()` с правильным порядком обхода
 
 ### Этап 3: Поддержка гравитации
-- [ ] Реализовать `SpawnAtTop()` для спауна над сеткой
+- [x] Реализовать `SpawnAtTop()` для спауна над сеткой
 
 ### Этап 4: Тестирование
-- [ ] Настроить сцену: SpawnComponent + GridComponent + ElementFactoryComponent
-- [ ] Вызвать FillGrid() в Start
+- [x] Создать `SpawnTester.cs` для тестирования
+- [x] Создать `SpawnSceneSetup.cs` Editor скрипт
 - [ ] Визуально проверить отсутствие матчей (нет 3+ одинаковых в ряд)
 - [ ] Проверить что все 64 ячейки заполнены
 
@@ -389,9 +389,29 @@ public class SpawnTestScene : MonoBehaviour
 
 ## Чеклист перед интеграцией
 
-- [ ] Namespace: `Match3.Spawn`
-- [ ] Класс реализует `ISpawnSystem`
-- [ ] Все зависимости через `[SerializeField]`
-- [ ] События используют `?.Invoke()`
-- [ ] Нет `GetComponent` в runtime-методах
-- [ ] Нет публичных полей (только SerializeField + свойства)
+- [x] Namespace: `Match3.Spawn`
+- [x] Класс реализует `ISpawnSystem`
+- [x] Все зависимости через `[SerializeField]`
+- [x] События используют `?.Invoke()`
+- [x] Нет `GetComponent` в runtime-методах
+- [x] Нет публичных полей (только SerializeField + свойства)
+
+---
+
+## Созданные файлы
+
+```
+Assets/Scripts/Spawn/
+├── SpawnComponent.cs      # Основной компонент
+└── SpawnTester.cs         # Тестовый компонент
+
+Assets/Scripts/Editor/
+└── SpawnSceneSetup.cs     # Editor utility
+```
+
+## Инструкция по тестированию
+
+1. Убедись что Grid и Elements настроены (Menu: Match3/Setup/1 и /2)
+2. Запусти `Match3/Setup/3. Setup Spawn System`
+3. Play → нажми Space → сетка заполнится
+4. Визуально проверь что нет 3+ одинаковых в ряд
