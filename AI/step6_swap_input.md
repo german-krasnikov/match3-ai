@@ -9,11 +9,11 @@
 ## Обзор
 
 Два компонента с чётким разделением ответственности:
-- **InputComponent** — обрабатывает клики, определяет выбранные ячейки
+- **InputComponent** — обрабатывает drag/swipe, определяет направление
 - **SwapComponent** — выполняет обмен элементов с анимацией
 
 ```
-[Mouse Click] → InputComponent → OnSwapRequested(pos1, pos2) → SwapComponent → анимация
+[Drag: MouseDown → MouseUp] → InputComponent → OnSwapRequested(pos1, pos2) → SwapComponent → анимация
 ```
 
 ---
@@ -54,12 +54,12 @@ public interface ISwapSystem
 ## 2. InputComponent.cs
 
 ### Ответственность
-- Обработка кликов мыши
+- Обработка drag/swipe жестов
 - Конвертация screen → world → grid координат
-- Логика выбора (первый клик → второй клик → swap request)
-- Визуальный feedback выбора (через событие)
+- Определение направления свайпа (4 направления)
+- Визуальный feedback начала drag (через событие)
 
-### Реализация
+### Реализация (Drag-based)
 
 ```csharp
 using System;
@@ -69,42 +69,44 @@ public class InputComponent : MonoBehaviour
 {
     // === СОБЫТИЯ ===
     public event Action<Vector2Int, Vector2Int> OnSwapRequested;
-    public event Action<Vector2Int> OnCellSelected;
-    public event Action OnSelectionCleared;
+    public event Action<Vector2Int> OnDragStarted;
+    public event Action OnDragCanceled;
 
     // === ЗАВИСИМОСТИ ===
     [Header("Dependencies")]
     [SerializeField] private GridComponent _grid;
     [SerializeField] private Camera _camera;
 
+    // === НАСТРОЙКИ ===
+    [Header("Settings")]
+    [SerializeField] private float _minDragDistance = 0.3f;
+
     // === СОСТОЯНИЕ ===
-    private Vector2Int? _selectedCell;
+    private Vector2Int? _dragStartCell;
+    private Vector3 _dragStartWorldPos;
+    private bool _isDragging;
     private bool _inputEnabled = true;
 
     // === ПУБЛИЧНЫЕ МЕТОДЫ ===
     public void SetInputEnabled(bool enabled)
     {
         _inputEnabled = enabled;
-        if (!enabled) ClearSelection();
-    }
-
-    public void ClearSelection()
-    {
-        _selectedCell = null;
-        OnSelectionCleared?.Invoke();
+        if (!enabled) CancelDrag();
     }
 
     // === UNITY CALLBACKS ===
     private void Update()
     {
         if (!_inputEnabled) return;
-        if (!Input.GetMouseButtonDown(0)) return;
 
-        HandleClick();
+        if (Input.GetMouseButtonDown(0))
+            HandleDragStart();
+        else if (Input.GetMouseButtonUp(0) && _isDragging)
+            HandleDragEnd();
     }
 
     // === ПРИВАТНЫЕ МЕТОДЫ ===
-    private void HandleClick()
+    private void HandleDragStart()
     {
         Vector3 worldPos = _camera.ScreenToWorldPoint(Input.mousePosition);
         Vector2Int gridPos = _grid.WorldToGrid(worldPos);
@@ -112,28 +114,55 @@ public class InputComponent : MonoBehaviour
         if (!_grid.IsValidPosition(gridPos)) return;
         if (_grid.GetElementAt(gridPos) == null) return;
 
-        ProcessSelection(gridPos);
+        _dragStartCell = gridPos;
+        _dragStartWorldPos = worldPos;
+        _isDragging = true;
+        OnDragStarted?.Invoke(gridPos);
     }
 
-    private void ProcessSelection(Vector2Int gridPos)
+    private void HandleDragEnd()
     {
-        if (_selectedCell == null)
+        if (_dragStartCell == null)
         {
-            // Первый выбор
-            _selectedCell = gridPos;
-            OnCellSelected?.Invoke(gridPos);
+            CancelDrag();
+            return;
         }
-        else if (_selectedCell == gridPos)
+
+        Vector3 worldPos = _camera.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 delta = worldPos - _dragStartWorldPos;
+
+        if (delta.magnitude < _minDragDistance)
         {
-            // Клик на ту же ячейку — отмена
-            ClearSelection();
+            CancelDrag();
+            return;
         }
+
+        Vector2Int direction = GetSwipeDirection(delta);
+        Vector2Int targetCell = _dragStartCell.Value + direction;
+
+        if (_grid.IsValidPosition(targetCell) && _grid.GetElementAt(targetCell) != null)
+        {
+            OnSwapRequested?.Invoke(_dragStartCell.Value, targetCell);
+        }
+
+        CancelDrag();
+    }
+
+    private Vector2Int GetSwipeDirection(Vector2 delta)
+    {
+        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            return delta.x > 0 ? Vector2Int.right : Vector2Int.left;
         else
-        {
-            // Второй выбор — запрос swap
-            OnSwapRequested?.Invoke(_selectedCell.Value, gridPos);
-            ClearSelection();
-        }
+            return delta.y > 0 ? Vector2Int.up : Vector2Int.down;
+    }
+
+    private void CancelDrag()
+    {
+        if (_isDragging)
+            OnDragCanceled?.Invoke();
+
+        _dragStartCell = null;
+        _isDragging = false;
     }
 }
 ```
@@ -142,10 +171,10 @@ public class InputComponent : MonoBehaviour
 
 | Решение | Обоснование |
 |---------|-------------|
-| `_inputEnabled` флаг | GameLoop отключает ввод во время анимаций |
-| `OnCellSelected` событие | Для визуального feedback (подсветка) |
-| Проверка `GetElementAt != null` | Нельзя выбрать пустую ячейку |
-| Клик на ту же ячейку = отмена | Интуитивный UX |
+| Drag вместо двух кликов | Стандартный UX для Match-3 игр |
+| `_minDragDistance` | Фильтрует случайные микро-движения |
+| `GetSwipeDirection` | Определяет основное направление (4 стороны) |
+| Проверка target cell | Нельзя свайпнуть за пределы или в пустоту |
 
 ---
 
@@ -354,12 +383,12 @@ private async void OnSwapRequested(Vector2Int pos1, Vector2Int pos2)
 
 ---
 
-## 6. Визуальный feedback выбора (опционально)
+## 6. Визуальный feedback drag (опционально)
 
-Простой компонент для подсветки выбранной ячейки:
+Простой компонент для подсветки ячейки во время drag:
 
 ```csharp
-public class SelectionHighlightComponent : MonoBehaviour
+public class DragHighlightComponent : MonoBehaviour
 {
     [SerializeField] private InputComponent _input;
     [SerializeField] private GridComponent _grid;
@@ -375,26 +404,26 @@ public class SelectionHighlightComponent : MonoBehaviour
 
     private void OnEnable()
     {
-        _input.OnCellSelected += OnCellSelected;
-        _input.OnSelectionCleared += OnSelectionCleared;
+        _input.OnDragStarted += OnDragStarted;
+        _input.OnDragCanceled += OnDragCanceled;
+        _input.OnSwapRequested += OnSwapRequested;
     }
 
     private void OnDisable()
     {
-        _input.OnCellSelected -= OnCellSelected;
-        _input.OnSelectionCleared -= OnSelectionCleared;
+        _input.OnDragStarted -= OnDragStarted;
+        _input.OnDragCanceled -= OnDragCanceled;
+        _input.OnSwapRequested -= OnSwapRequested;
     }
 
-    private void OnCellSelected(Vector2Int pos)
+    private void OnDragStarted(Vector2Int pos)
     {
         _highlight.transform.position = _grid.GridToWorld(pos);
         _highlight.gameObject.SetActive(true);
     }
 
-    private void OnSelectionCleared()
-    {
-        _highlight.gameObject.SetActive(false);
-    }
+    private void OnDragCanceled() => _highlight.gameObject.SetActive(false);
+    private void OnSwapRequested(Vector2Int _, Vector2Int __) => _highlight.gameObject.SetActive(false);
 }
 ```
 
@@ -408,11 +437,11 @@ public class SelectionHighlightComponent : MonoBehaviour
 - [ ] Создать пустые классы InputComponent и SwapComponent
 
 ### Фаза 2: InputComponent
-- [ ] Реализовать обработку кликов в Update
-- [ ] Добавить конвертацию screen → world → grid
-- [ ] Реализовать логику двух выборов
-- [ ] Добавить события OnSwapRequested, OnCellSelected, OnSelectionCleared
-- [ ] Добавить SetInputEnabled для блокировки
+- [x] Реализовать обработку drag в Update (MouseDown/MouseUp)
+- [x] Добавить конвертацию screen → world → grid
+- [x] Реализовать GetSwipeDirection (4 направления)
+- [x] Добавить события OnSwapRequested, OnDragStarted, OnDragCanceled
+- [x] Добавить SetInputEnabled для блокировки
 
 ### Фаза 3: SwapComponent
 - [ ] Реализовать AreNeighbors
@@ -448,11 +477,11 @@ public class SelectionHighlightComponent : MonoBehaviour
 
 | Случай | Поведение |
 |--------|-----------|
-| Клик вне сетки | Игнорируется |
-| Клик на пустую ячейку | Игнорируется |
-| Клик на ту же ячейку | Отмена выбора |
-| Swap не-соседей | `CanSwap` вернёт false |
-| Двойной клик во время анимации | Заблокирован через `_inputEnabled` |
+| Drag начат вне сетки | Игнорируется |
+| Drag начат на пустой ячейке | Игнорируется |
+| Drag слишком короткий | `OnDragCanceled`, нет swap |
+| Drag в сторону пустой/невалидной ячейки | `OnDragCanceled`, нет swap |
+| Drag во время анимации | Заблокирован через `_inputEnabled` |
 
 ---
 
@@ -474,30 +503,42 @@ go.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f);
 ## 10. Диаграмма потока данных
 
 ```
-┌─────────────────┐
-│  Mouse Click    │
-└────────┬────────┘
+┌──────────────────┐
+│  Mouse Down      │
+│  (start drag)    │
+└────────┬─────────┘
          ▼
-┌─────────────────┐
-│ InputComponent  │
-│ - WorldToGrid   │
-│ - IsValidPos    │
-│ - Track select  │
-└────────┬────────┘
+┌──────────────────┐
+│ InputComponent   │
+│ - Save start pos │
+│ - OnDragStarted  │
+└────────┬─────────┘
+         │
+┌────────▼─────────┐
+│  Mouse Up        │
+│  (end drag)      │
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│ InputComponent   │
+│ - Calc delta     │
+│ - GetSwipeDir    │
+│ - Validate       │
+└────────┬─────────┘
          │ OnSwapRequested(pos1, pos2)
          ▼
-┌─────────────────┐
-│  SwapComponent  │
-│ - AreNeighbors  │
-│ - Grid.SetAt    │
-│ - DOTween anim  │
-└────────┬────────┘
+┌──────────────────┐
+│  SwapComponent   │
+│ - AreNeighbors   │
+│ - Grid.SetAt     │
+│ - DOTween anim   │
+└────────┬─────────┘
          │ OnSwapCompleted
          ▼
-┌─────────────────┐
-│    GameLoop     │
-│ (проверка мат.) │
-└─────────────────┘
+┌──────────────────┐
+│    GameLoop      │
+│ (проверка мат.)  │
+└──────────────────┘
 ```
 
 ---

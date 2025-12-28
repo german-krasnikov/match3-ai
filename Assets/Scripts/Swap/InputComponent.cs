@@ -8,38 +8,38 @@ namespace Match3.Swap
     public class InputComponent : MonoBehaviour
     {
         public event Action<Vector2Int, Vector2Int> OnSwapRequested;
-        public event Action<Vector2Int> OnCellSelected;
-        public event Action OnSelectionCleared;
+        public event Action<Vector2Int> OnDragStarted;
+        public event Action OnDragCanceled;
 
         [Header("Dependencies")]
         [SerializeField] private GridComponent _grid;
         [SerializeField] private Camera _camera;
 
-        private Vector2Int? _selectedCell;
+        [Header("Settings")]
+        [SerializeField] private float _minDragDistance = 0.3f;
+
+        private Vector2Int? _dragStartCell;
+        private Vector3 _dragStartWorldPos;
+        private bool _isDragging;
         private bool _inputEnabled = true;
 
         public void SetInputEnabled(bool enabled)
         {
             _inputEnabled = enabled;
-            if (!enabled) ClearSelection();
-        }
-
-        public void ClearSelection()
-        {
-            if (_selectedCell == null) return;
-            _selectedCell = null;
-            OnSelectionCleared?.Invoke();
+            if (!enabled) CancelDrag();
         }
 
         private void Update()
         {
             if (!_inputEnabled) return;
-            if (!Input.GetMouseButtonDown(0)) return;
 
-            HandleClick();
+            if (Input.GetMouseButtonDown(0))
+                HandleDragStart();
+            else if (Input.GetMouseButtonUp(0) && _isDragging)
+                HandleDragEnd();
         }
 
-        private void HandleClick()
+        private void HandleDragStart()
         {
             Vector3 worldPos = _camera.ScreenToWorldPoint(Input.mousePosition);
             Vector2Int gridPos = _grid.WorldToGrid(worldPos);
@@ -47,25 +47,55 @@ namespace Match3.Swap
             if (!_grid.IsValidPosition(gridPos)) return;
             if (_grid.GetElementAt(gridPos) == null) return;
 
-            ProcessSelection(gridPos);
+            _dragStartCell = gridPos;
+            _dragStartWorldPos = worldPos;
+            _isDragging = true;
+            OnDragStarted?.Invoke(gridPos);
         }
 
-        private void ProcessSelection(Vector2Int gridPos)
+        private void HandleDragEnd()
         {
-            if (_selectedCell == null)
+            if (_dragStartCell == null)
             {
-                _selectedCell = gridPos;
-                OnCellSelected?.Invoke(gridPos);
+                CancelDrag();
+                return;
             }
-            else if (_selectedCell == gridPos)
+
+            Vector3 worldPos = _camera.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 delta = worldPos - _dragStartWorldPos;
+
+            if (delta.magnitude < _minDragDistance)
             {
-                ClearSelection();
+                CancelDrag();
+                return;
             }
+
+            Vector2Int direction = GetSwipeDirection(delta);
+            Vector2Int targetCell = _dragStartCell.Value + direction;
+
+            if (_grid.IsValidPosition(targetCell) && _grid.GetElementAt(targetCell) != null)
+            {
+                OnSwapRequested?.Invoke(_dragStartCell.Value, targetCell);
+            }
+
+            CancelDrag();
+        }
+
+        private Vector2Int GetSwipeDirection(Vector2 delta)
+        {
+            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+                return delta.x > 0 ? Vector2Int.right : Vector2Int.left;
             else
-            {
-                OnSwapRequested?.Invoke(_selectedCell.Value, gridPos);
-                ClearSelection();
-            }
+                return delta.y > 0 ? Vector2Int.up : Vector2Int.down;
+        }
+
+        private void CancelDrag()
+        {
+            if (_isDragging)
+                OnDragCanceled?.Invoke();
+
+            _dragStartCell = null;
+            _isDragging = false;
         }
     }
 }

@@ -403,38 +403,50 @@ Assets/Scripts/Swap/
 └── InputComponent.cs
 ```
 
-### InputComponent.cs
+### InputComponent.cs (Drag-based)
 ```csharp
 public class InputComponent : MonoBehaviour
 {
     [SerializeField] private GridComponent _grid;
     [SerializeField] private Camera _camera;
-
-    private Vector2Int? _firstSelection;
+    [SerializeField] private float _minDragDistance = 0.3f;
 
     public event Action<Vector2Int, Vector2Int> OnSwapRequested;
-    public event Action<Vector2Int> OnCellClicked;
+    public event Action<Vector2Int> OnDragStarted;
+    public event Action OnDragCanceled;
+
+    private Vector2Int? _dragStartCell;
+    private Vector3 _dragStartWorldPos;
+    private bool _isDragging;
 
     private void Update()
     {
         if (Input.GetMouseButtonDown(0))
+            HandleDragStart();
+        else if (Input.GetMouseButtonUp(0) && _isDragging)
+            HandleDragEnd();
+    }
+
+    private void HandleDragEnd()
+    {
+        Vector3 worldPos = _camera.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 delta = worldPos - _dragStartWorldPos;
+
+        if (delta.magnitude >= _minDragDistance)
         {
-            var worldPos = _camera.ScreenToWorldPoint(Input.mousePosition);
-            var gridPos = _grid.WorldToGrid(worldPos);
-
-            if (!_grid.IsValidPosition(gridPos)) return;
-
-            if (_firstSelection == null)
-            {
-                _firstSelection = gridPos;
-                OnCellClicked?.Invoke(gridPos);
-            }
-            else
-            {
-                OnSwapRequested?.Invoke(_firstSelection.Value, gridPos);
-                _firstSelection = null;
-            }
+            Vector2Int dir = GetSwipeDirection(delta);
+            Vector2Int target = _dragStartCell.Value + dir;
+            if (_grid.IsValidPosition(target))
+                OnSwapRequested?.Invoke(_dragStartCell.Value, target);
         }
+        CancelDrag();
+    }
+
+    private Vector2Int GetSwipeDirection(Vector2 delta)
+    {
+        return Mathf.Abs(delta.x) > Mathf.Abs(delta.y)
+            ? (delta.x > 0 ? Vector2Int.right : Vector2Int.left)
+            : (delta.y > 0 ? Vector2Int.up : Vector2Int.down);
     }
 }
 ```
@@ -486,11 +498,11 @@ private Vector2Int StubWorldToGrid(Vector3 w) => new Vector2Int((int)w.x, (int)w
 ```
 
 ### Подзадачи
-- [ ] Реализовать InputComponent (click selection)
-- [ ] Реализовать AreNeighbors() валидацию
-- [ ] Реализовать AnimateSwap() с DOTween
-- [ ] Реализовать SwapBack() для неудачных свапов
-- [ ] Тест: выбрать 2 соседа, проверить анимацию
+- [x] Реализовать InputComponent (drag/swipe)
+- [x] Реализовать AreNeighbors() валидацию
+- [x] Реализовать AnimateSwap() с DOTween
+- [x] Реализовать SwapBack() для неудачных свапов
+- [ ] Тест: drag на соседа, проверить анимацию
 
 ---
 

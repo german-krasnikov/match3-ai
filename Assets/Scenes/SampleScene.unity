@@ -136,6 +136,9 @@ GameObject:
   - component: {fileID: 457303917}
   - component: {fileID: 457303920}
   - component: {fileID: 457303919}
+  - component: {fileID: 457303923}
+  - component: {fileID: 457303922}
+  - component: {fileID: 457303921}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -220,8 +223,8 @@ MonoBehaviour:
   _grid: {fileID: 457303915}
   _spawn: {fileID: 457303918}
   _matchDetection: {fileID: 457303920}
-  _fillGridOnStart: 1
-  _testMatchesOnStart: 1
+  _fillGridOnStart: 0
+  _testMatchesOnStart: 0
 --- !u!114 &457303920
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,6 +239,53 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _minMatchLength: 3
   _grid: {fileID: 457303915}
+--- !u!114 &457303921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457303914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00a7c724fcf0346b584c97dbdcce6354, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _spawn: {fileID: 457303918}
+  _input: {fileID: 457303923}
+  _swap: {fileID: 457303922}
+  _matchDetection: {fileID: 457303920}
+  _fillOnStart: 1
+  _autoSwapBack: 1
+--- !u!114 &457303922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457303914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6263b09f15d754eab9b731d012b48bf7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _swapDuration: 0.2
+  _swapEase: 6
+  _grid: {fileID: 457303915}
+--- !u!114 &457303923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457303914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d8bb2e10d3f4252ab6892447ee77fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _grid: {fileID: 457303915}
+  _camera: {fileID: 519420031}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
