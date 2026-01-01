@@ -167,6 +167,21 @@ namespace Match3.Board
             }
         }
 
+        /// <summary>
+        /// Swaps view references at two positions.
+        /// </summary>
+        public void SwapViews(Vector2Int a, Vector2Int b)
+        {
+            var viewA = _views[a.x, a.y];
+            var viewB = _views[b.x, b.y];
+
+            _views[a.x, a.y] = viewB;
+            _views[b.x, b.y] = viewA;
+
+            if (viewA != null) viewA.SetGridPosition(b);
+            if (viewB != null) viewB.SetGridPosition(a);
+        }
+
         // --- Event Handlers ---
 
         private void HandleGemAdded(Vector2Int pos, GemData gem)
