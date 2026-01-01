@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using System.IO;
+using Match3.Grid;
 
 public static class GridSetupEditor
 {
