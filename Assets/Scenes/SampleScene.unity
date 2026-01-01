@@ -132,6 +132,8 @@ GameObject:
   m_Component:
   - component: {fileID: 149962266}
   - component: {fileID: 149962265}
+  - component: {fileID: 149962268}
+  - component: {fileID: 149962267}
   m_Layer: 0
   m_Name: Systems
   m_TagString: Untagged
@@ -170,6 +172,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &149962267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 149962264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b914706f12b464c828eea28ce64e402c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _swapDuration: 0.2
+  _swapEase: 6
+  _swapBackDuration: 0.15
+  _swapBackEase: 7
+--- !u!114 &149962268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 149962264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b50dabf9daf1a402da10584d61a6237a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _minSwipeDistance: 0.3
+  _camera: {fileID: 0}
+  _gridView: {fileID: 852018286}
 --- !u!1 &313311217
 GameObject:
   m_ObjectHideFlags: 0
