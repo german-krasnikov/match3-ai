@@ -124,5 +124,17 @@ namespace Match3.Board
             var gem = GetGem(pos);
             return gem?.Type;
         }
+
+        /// <summary>
+        /// Sets gem at position WITHOUT firing OnGemAdded event.
+        /// Used when view is created manually (fall spawn).
+        /// </summary>
+        public void SetGemSilent(Vector2Int pos, GemData gem)
+        {
+            if (!IsValidPosition(pos))
+                return;
+            _gems[pos.x, pos.y] = gem;
+            // No event fired
+        }
     }
 }

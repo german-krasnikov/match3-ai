@@ -28,13 +28,9 @@ namespace Match3.Board
         /// </summary>
         public event Action OnBoardReady;
 
-        private void Awake()
-        {
-            Initialize();
-        }
-
         private void Start()
         {
+            Initialize();
             FillBoard();
         }
 

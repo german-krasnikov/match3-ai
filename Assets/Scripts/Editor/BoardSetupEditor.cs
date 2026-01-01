@@ -82,7 +82,10 @@ public static class BoardSetupEditor
 
         GemConfig config = AssetDatabase.LoadAssetAtPath<GemConfig>(assetPath);
         if (config != null)
+        {
+            SetupDefaultColors(config);
             return config;
+        }
 
         string directory = Path.GetDirectoryName(assetPath);
         if (!Directory.Exists(directory))
@@ -90,6 +93,7 @@ public static class BoardSetupEditor
 
         config = ScriptableObject.CreateInstance<GemConfig>();
         AssetDatabase.CreateAsset(config, assetPath);
+        SetupDefaultColors(config);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
@@ -97,33 +101,81 @@ public static class BoardSetupEditor
         return config;
     }
 
+    private static void SetupDefaultColors(GemConfig config)
+    {
+        var so = new SerializedObject(config);
+        var gemsProp = so.FindProperty("_gems");
+
+        // Default colors for gem types
+        Color[] colors = {
+            new Color(1f, 0.2f, 0.2f),    // Red
+            new Color(0.2f, 0.4f, 1f),    // Blue
+            new Color(0.2f, 0.9f, 0.3f),  // Green
+            new Color(1f, 0.9f, 0.2f),    // Yellow
+            new Color(0.7f, 0.3f, 0.9f),  // Purple
+            new Color(1f, 0.5f, 0.1f)     // Orange
+        };
+
+        // Only setup if empty or colors are default (black/clear)
+        if (gemsProp.arraySize == 0)
+        {
+            gemsProp.arraySize = 6;
+            for (int i = 0; i < 6; i++)
+            {
+                var element = gemsProp.GetArrayElementAtIndex(i);
+                element.FindPropertyRelative("Type").enumValueIndex = i;
+                element.FindPropertyRelative("Color").colorValue = colors[i];
+            }
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(config);
+            Debug.Log("GemConfig: Set default colors");
+        }
+        else
+        {
+            // Update colors if they're black/clear
+            bool needsUpdate = false;
+            for (int i = 0; i < gemsProp.arraySize && i < colors.Length; i++)
+            {
+                var element = gemsProp.GetArrayElementAtIndex(i);
+                var colorProp = element.FindPropertyRelative("Color");
+                if (colorProp.colorValue == Color.black || colorProp.colorValue.a == 0)
+                {
+                    colorProp.colorValue = colors[i];
+                    needsUpdate = true;
+                }
+            }
+            if (needsUpdate)
+            {
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(config);
+                Debug.Log("GemConfig: Updated colors");
+            }
+        }
+    }
+
     private static GemView GetOrCreateGemPrefab(GemConfig config)
     {
-        string prefabPath = "Assets/Prefabs/Gem.prefab";
+        // Try multiple paths
+        string[] paths = {
+            "Assets/Prefabs/Gem.prefab",
+            "Assets/Prefabs/Gems/Gem.prefab"
+        };
 
-        GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-        if (existing != null)
-            return existing.GetComponent<GemView>();
+        foreach (var path in paths)
+        {
+            GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null)
+            {
+                var view = existing.GetComponent<GemView>();
+                if (view != null)
+                {
+                    Debug.Log($"Using existing Gem prefab at {path}");
+                    return view;
+                }
+            }
+        }
 
-        string directory = Path.GetDirectoryName(prefabPath);
-        if (!Directory.Exists(directory))
-            Directory.CreateDirectory(directory);
-
-        // Create prefab
-        GameObject gemObj = new GameObject("Gem");
-
-        // Add SpriteRenderer
-        SpriteRenderer sr = gemObj.AddComponent<SpriteRenderer>();
-        sr.sortingOrder = 1;
-
-        // Add GemView
-        gemObj.AddComponent<GemView>();
-
-        // Save as prefab
-        GameObject prefab = PrefabUtility.SaveAsPrefabAsset(gemObj, prefabPath);
-        Object.DestroyImmediate(gemObj);
-
-        Debug.Log($"Created Gem prefab at {prefabPath}");
-        return prefab.GetComponent<GemView>();
+        Debug.LogError("Gem.prefab not found! Create it manually with GemView + SpriteRenderer.");
+        return null;
     }
 }
