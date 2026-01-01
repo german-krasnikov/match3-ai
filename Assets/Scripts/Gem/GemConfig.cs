@@ -23,8 +23,17 @@ namespace Match3.Gem
                 if (gem.Type == type)
                     return gem.Sprite;
             }
-            Debug.LogWarning($"GemConfig: Sprite not found for {type}");
             return null;
+        }
+
+        public Color GetColor(GemType type)
+        {
+            foreach (var gem in _gems)
+            {
+                if (gem.Type == type)
+                    return gem.Color;
+            }
+            return Color.white;
         }
 
         /// <summary>

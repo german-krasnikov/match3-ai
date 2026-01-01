@@ -7,6 +7,7 @@ namespace Match3.Gem
     public struct GemTypeData
     {
         public GemType Type;
+        public Color Color;
         public Sprite Sprite;
     }
 }

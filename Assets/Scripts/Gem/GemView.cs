@@ -25,7 +25,10 @@ namespace Match3.Gem
         public void Setup(GemType type, GemConfig config)
         {
             _type = type;
-            _spriteRenderer.sprite = config.GetSprite(type);
+            var sprite = config.GetSprite(type);
+            if (sprite != null)
+                _spriteRenderer.sprite = sprite;
+            _spriteRenderer.color = config.GetColor(type);
         }
 
         /// <summary>

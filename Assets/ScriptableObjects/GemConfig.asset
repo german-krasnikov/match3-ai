@@ -14,14 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _gems:
   - Type: 0
-    Sprite: {fileID: 0}
+    Color: {r: 1, g: 0.2, b: 0.2, a: 1}
+    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   - Type: 1
-    Sprite: {fileID: 0}
+    Color: {r: 0.2, g: 0.4, b: 1, a: 1}
+    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   - Type: 2
-    Sprite: {fileID: 0}
+    Color: {r: 0.2, g: 0.9, b: 0.3, a: 1}
+    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   - Type: 3
-    Sprite: {fileID: 0}
+    Color: {r: 1, g: 0.9, b: 0.2, a: 1}
+    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   - Type: 4
-    Sprite: {fileID: 0}
+    Color: {r: 0.7, g: 0.3, b: 0.9, a: 1}
+    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   - Type: 5
-    Sprite: {fileID: 0}
+    Color: {r: 1, g: 0.5, b: 0.1, a: 1}
+    Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
