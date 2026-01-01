@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using Match3.Gem;
 
 public static class Step2Setup
 {
