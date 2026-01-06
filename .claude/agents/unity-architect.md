@@ -221,6 +221,33 @@ Answer format: "1A, 2A" or provide details.
 
 ---
 
+## 0. Parallel Execution Plan
+
+### Task Dependency Graph
+```mermaid
+graph LR
+    T1[Task 1: Models] --> T3[Task 3: Presenters]
+    T2[Task 2: Views] --> T3
+    T3 --> T4[Task 4: Tests]
+    T4 --> T5[Task 5: Scene Setup]
+```
+
+### Parallel Groups
+| Group | Tasks | Can Run In Parallel |
+|-------|-------|---------------------|
+| Group A | Task 1, Task 2 | ✅ Yes |
+| Group B | Task 3 | After Group A |
+| Group C | Task 4, Task 5 | After Group B |
+
+### Task Assignments
+- **Task 1**: Models (GridModel, CellModel) — independent, no deps
+- **Task 2**: Views + Interfaces (IGridView, GridView) — independent
+- **Task 3**: Presenters (GridPresenter) — depends on Task 1, 2
+- **Task 4**: Tests (ModelTests, PresenterTests) — depends on Task 3
+- **Task 5**: Scene Setup — depends on Task 2
+
+---
+
 ## 1. Components
 
 ### 1.1 {ComponentName}Model
@@ -584,13 +611,15 @@ namespace Editor
 
 | File | Path | Type |
 |------|------|------|
-| {ComponentName}Model.cs | Assets/Scripts/Runtime/Features/{Feature}/ | Model |
-| I{ComponentName}View.cs | Assets/Scripts/Runtime/Features/{Feature}/ | Interface |
-| {ComponentName}View.cs | Assets/Scripts/Runtime/Features/{Feature}/ | View |
-| {ComponentName}Presenter.cs | Assets/Scripts/Runtime/Features/{Feature}/ | Presenter |
-| {ComponentName}ModelTests.cs | Assets/Scripts/Tests/EditMode/ | Test |
-| {ComponentName}PresenterTests.cs | Assets/Scripts/Tests/EditMode/ | Test |
+| {ComponentName}Model.cs | Assets/Scripts/Features/{Feature}/Models/ | Model |
+| I{ComponentName}View.cs | Assets/Scripts/Features/{Feature}/Views/ | Interface |
+| {ComponentName}View.cs | Assets/Scripts/Features/{Feature}/Views/ | View |
+| {ComponentName}Presenter.cs | Assets/Scripts/Features/{Feature}/Presenters/ | Presenter |
+| {ComponentName}ModelTests.cs | Assets/Tests/EditMode/ | Test |
+| {ComponentName}PresenterTests.cs | Assets/Tests/EditMode/ | Test |
 | Step{N}SceneSetup.cs | Assets/Scripts/Editor/ | Setup |
+
+⚠️ NO Runtime/ folder! Files go directly in Scripts/
 ```
 
 ---
