@@ -14,7 +14,7 @@ description: |
   - "Validate step N"
   - "Check if code compiles"
   - "Run tests"
-model: sonnet
+model: haiku
 color: blue
 ---
 
