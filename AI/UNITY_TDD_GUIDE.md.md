@@ -69,31 +69,33 @@ Assets/
 │   ├── Runtime/
 │   │   ├── Runtime.asmdef
 │   │   │
-│   │   ├── Models/                 # Данные и бизнес-логика (чистый C#)
+│   │   ├── Models/                 # namespace: Models
 │   │   │   ├── PlayerModel.cs
 │   │   │   ├── InventoryModel.cs
 │   │   │   └── CombatModel.cs
 │   │   │
-│   │   ├── Views/                  # MonoBehaviours, UI (Passive)
+│   │   ├── Views/                  # namespace: Views
 │   │   │   ├── Interfaces/
 │   │   │   │   ├── IPlayerView.cs
 │   │   │   │   └── IInventoryView.cs
 │   │   │   ├── PlayerView.cs
 │   │   │   └── InventoryView.cs
 │   │   │
-│   │   ├── Presenters/             # Связывает Model и View (чистый C#)
+│   │   ├── Presenters/             # namespace: Presenters
 │   │   │   ├── PlayerPresenter.cs
 │   │   │   └── InventoryPresenter.cs
 │   │   │
-│   │   └── Services/               # Внешние зависимости
+│   │   └── Services/               # namespace: Services
 │   │       ├── Interfaces/
 │   │       └── Implementations/
 │   │
 │   └── Tests/
 │       ├── EditMode/
 │       │   ├── EditModeTests.asmdef
-│       │   ├── Models/
-│       │   └── Presenters/
+│       │   ├── Models/             # namespace: Models (тот же!)
+│       │   │   └── PlayerModelTests.cs
+│       │   └── Presenters/         # namespace: Presenters (тот же!)
+│       │       └── PlayerPresenterTests.cs
 │       │
 │       └── PlayMode/
 │           ├── PlayModeTests.asmdef
@@ -977,6 +979,68 @@ public void NotifiesObserversWhenStateChanges() { }
 - Не используйте номера тестов: `Test1`, `Test2`
 - Не пишите `Test` в начале имени
 - Избегайте общих слов: `TestSomething`, `CheckResult`
+
+---
+
+## Конвенции namespace для тестов
+
+### Правило: тот же namespace + суффикс Tests у класса
+
+```csharp
+// Код: Assets/Scripts/Runtime/Game/Element.cs
+namespace Game
+{
+    public class Element { }
+
+    internal class ElementHelper { }  // доступен в тестах!
+}
+
+// Тест: Assets/Scripts/Tests/EditMode/Game/ElementTests.cs
+namespace Game  // тот же namespace
+{
+    [TestFixture]
+    public class ElementTests  // суффикс Tests у класса
+    {
+        [Test]
+        public void Method_Condition_Result() { }
+    }
+}
+```
+
+### Преимущества
+
+| Преимущество | Описание |
+|--------------|----------|
+| **Доступ к internal** | Не нужен `[InternalsVisibleTo]` |
+| **Меньше using'ов** | Классы уже в том же namespace |
+| **Простой рефакторинг** | Переименовал namespace — тесты автоматом |
+
+### Структура папок
+
+```
+Assets/Scripts/
+├── Runtime/
+│   ├── Runtime.asmdef
+│   └── Game/
+│       ├── Element.cs           // namespace Game
+│       └── Board.cs             // namespace Game
+│
+└── Tests/
+    └── EditMode/
+        ├── EditModeTests.asmdef
+        └── Game/
+            ├── ElementTests.cs  // namespace Game, class ElementTests
+            └── BoardTests.cs    // namespace Game, class BoardTests
+```
+
+### Итоговая конвенция
+
+| Элемент | Конвенция | Пример |
+|---------|-----------|--------|
+| **Namespace** | Тот же что у кода | `Game` |
+| **Класс теста** | `{ClassName}Tests` | `ElementTests` |
+| **Файл теста** | `{ClassName}Tests.cs` | `ElementTests.cs` |
+| **Метод теста** | `Method_Condition_Result` | `TakeDamage_WhenDead_DoesNothing` |
 
 ---
 
