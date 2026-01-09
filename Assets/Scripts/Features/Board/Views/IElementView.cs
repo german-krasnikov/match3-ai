@@ -15,5 +15,9 @@ namespace Features.Board.Views
         void UpdatePosition(Vector3 worldPosition);
         void SetActive(bool active);
         void Destroy();
+
+        event Action<GridPosition> OnClicked;
+        event Action<GridPosition> OnDragStart;
+        event Action<GridPosition> OnDragEnd;
     }
 }

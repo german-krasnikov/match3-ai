@@ -12,5 +12,6 @@ namespace Features.Board.Views
         void Clear();
 
         event Action<GridPosition> OnCellClicked;
+        event Action<GridPosition, GridPosition> OnSwapAttempted;
     }
 }

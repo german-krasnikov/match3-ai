@@ -18,7 +18,11 @@ namespace Features.Board.Views
 
         private readonly Dictionary<GridPosition, ElementView> _elementViews = new();
 
+        private GridPosition _dragStartPos = GridPosition.Invalid;
+        private bool _isDragging;
+
         public event Action<GridPosition> OnCellClicked;
+        public event Action<GridPosition, GridPosition> OnSwapAttempted;
 
         public void Initialize(int width, int height, float cellSize)
         {
@@ -26,7 +30,6 @@ namespace Features.Board.Views
             _height = height;
             _cellSize = cellSize;
 
-            // Center the grid
             _originOffset = new Vector3(
                 -(_width - 1) * _cellSize * 0.5f,
                 -(_height - 1) * _cellSize * 0.5f,
@@ -51,6 +54,10 @@ namespace Features.Board.Views
             elementView.Initialize(pos, type, sprite);
             elementView.UpdatePosition(GridToWorld(pos));
 
+            elementView.OnDragStart += HandleElementDragStart;
+            elementView.OnDragEnd += HandleElementDragEnd;
+            elementView.OnClicked += HandleElementClicked;
+
             _elementViews[pos] = elementView;
         }
 
@@ -58,6 +65,10 @@ namespace Features.Board.Views
         {
             if (_elementViews.TryGetValue(pos, out var view))
             {
+                view.OnDragStart -= HandleElementDragStart;
+                view.OnDragEnd -= HandleElementDragEnd;
+                view.OnClicked -= HandleElementClicked;
+
                 view.Destroy();
                 _elementViews.Remove(pos);
             }
@@ -67,9 +78,37 @@ namespace Features.Board.Views
         {
             foreach (var view in _elementViews.Values)
             {
+                view.OnDragStart -= HandleElementDragStart;
+                view.OnDragEnd -= HandleElementDragEnd;
+                view.OnClicked -= HandleElementClicked;
                 view.Destroy();
             }
             _elementViews.Clear();
+        }
+
+        private void HandleElementDragStart(GridPosition pos)
+        {
+            _dragStartPos = pos;
+            _isDragging = true;
+        }
+
+        private void HandleElementDragEnd(GridPosition endPos)
+        {
+            if (!_isDragging) return;
+
+            _isDragging = false;
+
+            if (_dragStartPos.IsValid && endPos.IsValid && !_dragStartPos.Equals(endPos))
+            {
+                OnSwapAttempted?.Invoke(_dragStartPos, endPos);
+            }
+
+            _dragStartPos = GridPosition.Invalid;
+        }
+
+        private void HandleElementClicked(GridPosition pos)
+        {
+            OnCellClicked?.Invoke(pos);
         }
 
         private Vector3 GridToWorld(GridPosition pos)
@@ -81,12 +120,25 @@ namespace Features.Board.Views
             );
         }
 
+        public GridPosition WorldToGrid(Vector3 worldPos)
+        {
+            Vector3 localPos = worldPos - transform.position - _originOffset;
+
+            int x = Mathf.RoundToInt(localPos.x / _cellSize);
+            int y = Mathf.RoundToInt(localPos.y / _cellSize);
+
+            if (x < 0 || x >= _width || y < 0 || y >= _height)
+                return GridPosition.Invalid;
+
+            return new GridPosition(x, y);
+        }
+
         private Sprite GetSpriteForType(ElementType type)
         {
             if (_config == null || _config.ElementSprites == null)
                 return null;
 
-            int index = (int)type - 1; // ElementType starts from 1
+            int index = (int)type - 1;
             if (index >= 0 && index < _config.ElementSprites.Length)
                 return _config.ElementSprites[index];
 
