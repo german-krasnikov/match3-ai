@@ -1,4 +1,4 @@
-// Element.cs
+// Assets/Scripts/Features/Board/Models/Element.cs
 using Common;
 
 namespace Features.Board.Models

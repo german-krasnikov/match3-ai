@@ -1,4 +1,4 @@
-// Cell.cs
+// Assets/Scripts/Features/Board/Models/Cell.cs
 using Common;
 
 namespace Features.Board.Models

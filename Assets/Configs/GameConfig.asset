@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 176d993f9254c4329af86afc164a7088, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: 
+  GridWidth: 8
+  GridHeight: 8
+  ElementTypeCount: 5
+  ElementSprites:
+  - {fileID: 21300000, guid: ee76713a0c95f46e3bdbf9c0a5d46d32, type: 3}
+  - {fileID: 21300000, guid: ac23e29a019d54b70be41d7041cb4c7b, type: 3}
+  - {fileID: 21300000, guid: 6ca415e0574d548f595650f9caabb4fd, type: 3}
+  - {fileID: 21300000, guid: 8ff76ba8571e047db8f7bf6ee2e72752, type: 3}
+  - {fileID: 21300000, guid: 11a872622fd414ffdb370ff33276510b, type: 3}
+  MinMatchLength: 3
+  SwapDuration: 0.3
+  FallDuration: 0.2
+  DestroyDuration: 0.2
+  SpawnDelay: 0.1

@@ -1,4 +1,4 @@
-// BoardModel.cs
+// Assets/Scripts/Features/Board/Models/BoardModel.cs
 using System;
 using Common;
 
@@ -55,7 +55,7 @@ namespace Features.Board.Models
             if (cell == null) return;
 
             cell.SetElement(element);
-            OnElementAdded?.Invoke(pos, element?.Type ?? ElementType.None);
+            OnElementAdded?.Invoke(pos, element.Type);
         }
 
         public void RemoveElement(GridPosition pos)
@@ -73,8 +73,8 @@ namespace Features.Board.Models
             var cellB = GetCell(b);
             if (cellA == null || cellB == null) return;
 
-            var elementA = cellA.RemoveElement();
-            var elementB = cellB.RemoveElement();
+            var elementA = cellA.Element;
+            var elementB = cellB.Element;
 
             cellA.SetElement(elementB);
             cellB.SetElement(elementA);
