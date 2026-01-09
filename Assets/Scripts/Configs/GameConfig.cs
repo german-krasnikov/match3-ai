@@ -9,6 +9,7 @@ namespace Configs
         [Header("Grid")]
         public int GridWidth = 8;
         public int GridHeight = 8;
+        public float CellSize = 1.0f;
 
         [Header("Elements")]
         public int ElementTypeCount = 5;
