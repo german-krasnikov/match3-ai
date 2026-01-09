@@ -297,6 +297,58 @@ namespace Features.Board.Views
             }
         }
 
+        public void SpawnElement(GridPosition pos, ElementType type, Action onComplete)
+        {
+            var sprite = GetSpriteForType(type);
+            if (sprite == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            var elementGO = new GameObject($"Element_{pos.X}_{pos.Y}");
+            elementGO.transform.SetParent(transform);
+
+            var elementView = elementGO.AddComponent<ElementView>();
+            elementView.Initialize(pos, type, sprite);
+
+            // Start above the board
+            var targetPos = GridToWorld(pos);
+            var startPos = targetPos + Vector3.up * _cellSize * 2;
+            elementView.UpdatePosition(startPos);
+
+            elementView.OnDragStart += HandleElementDragStart;
+            elementView.OnDragEnd += HandleElementDragEnd;
+            elementView.OnClicked += HandleElementClicked;
+
+            _elementViews[pos] = elementView;
+
+            float duration = _config != null ? _config.FallDuration : 0.2f;
+            elementView.MoveTo(targetPos, duration, onComplete);
+        }
+
+        public void SpawnElements(List<(GridPosition pos, ElementType type)> spawns, Action onComplete)
+        {
+            if (spawns == null || spawns.Count == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            int totalToSpawn = spawns.Count;
+            int spawnedCount = 0;
+
+            foreach (var (pos, type) in spawns)
+            {
+                SpawnElement(pos, type, () =>
+                {
+                    spawnedCount++;
+                    if (spawnedCount >= totalToSpawn)
+                        onComplete?.Invoke();
+                });
+            }
+        }
+
         private void HandleElementDragStart(GridPosition pos)
         {
             _dragStartPos = pos;

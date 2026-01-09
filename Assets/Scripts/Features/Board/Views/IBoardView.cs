@@ -28,6 +28,18 @@ namespace Features.Board.Views
         /// </summary>
         void SpawnElements(List<SpawnData> spawns, Action onComplete);
 
+        /// <summary>
+        /// Spawn a new element at position with fall-in animation from above.
+        /// Used during refill phase after falls complete.
+        /// </summary>
+        void SpawnElement(GridPosition pos, ElementType type, Action onComplete);
+
+        /// <summary>
+        /// Spawn multiple elements simultaneously.
+        /// Calls onComplete when ALL spawn animations finish.
+        /// </summary>
+        void SpawnElements(List<(GridPosition pos, ElementType type)> spawns, Action onComplete);
+
         event Action<GridPosition> OnCellClicked;
         event Action<GridPosition, GridPosition> OnSwapAttempted;
     }
