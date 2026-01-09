@@ -11,6 +11,12 @@ namespace Features.Board.Views
         void RemoveElement(GridPosition pos);
         void Clear();
 
+        /// <summary>
+        /// Swap two elements visually with animation.
+        /// Calls onComplete when both elements finish moving.
+        /// </summary>
+        void SwapElements(GridPosition from, GridPosition to, Action onComplete);
+
         event Action<GridPosition> OnCellClicked;
         event Action<GridPosition, GridPosition> OnSwapAttempted;
     }

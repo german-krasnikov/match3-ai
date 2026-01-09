@@ -86,6 +86,44 @@ namespace Features.Board.Views
             _elementViews.Clear();
         }
 
+        public void SwapElements(GridPosition from, GridPosition to, Action onComplete)
+        {
+            if (!_elementViews.TryGetValue(from, out var viewFrom) ||
+                !_elementViews.TryGetValue(to, out var viewTo))
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            float duration = _config != null ? _config.SwapDuration : 0.3f;
+            int completedCount = 0;
+
+            void OnMoveComplete()
+            {
+                completedCount++;
+                if (completedCount >= 2)
+                {
+                    // Update dictionary keys after swap
+                    _elementViews.Remove(from);
+                    _elementViews.Remove(to);
+
+                    viewFrom.SetGridPosition(to);
+                    viewTo.SetGridPosition(from);
+
+                    _elementViews[to] = viewFrom;
+                    _elementViews[from] = viewTo;
+
+                    onComplete?.Invoke();
+                }
+            }
+
+            Vector3 targetFrom = GridToWorld(to);
+            Vector3 targetTo = GridToWorld(from);
+
+            viewFrom.MoveTo(targetFrom, duration, OnMoveComplete);
+            viewTo.MoveTo(targetTo, duration, OnMoveComplete);
+        }
+
         private void HandleElementDragStart(GridPosition pos)
         {
             _dragStartPos = pos;

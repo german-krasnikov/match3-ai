@@ -1,6 +1,7 @@
 // Assets/Scripts/Features/Board/Views/ElementView.cs
 using System;
 using Common;
+using DG.Tweening;
 using UnityEngine;
 
 namespace Features.Board.Views
@@ -12,6 +13,7 @@ namespace Features.Board.Views
         private SpriteRenderer _spriteRenderer;
         private BoxCollider2D _collider;
         private Camera _mainCamera;
+        private Tween _moveTween;
 
         private bool _isDragging;
         private Vector3 _dragStartWorldPos;
@@ -29,6 +31,11 @@ namespace Features.Board.Views
             _spriteRenderer = GetComponent<SpriteRenderer>();
             _collider = GetComponent<BoxCollider2D>();
             _mainCamera = Camera.main;
+        }
+
+        private void OnDestroy()
+        {
+            _moveTween?.Kill();
         }
 
         public void Initialize(GridPosition pos, ElementType type, Sprite sprite)
@@ -62,8 +69,33 @@ namespace Features.Board.Views
             gameObject.SetActive(active);
         }
 
+        public void SetGridPosition(GridPosition newPos)
+        {
+            Position = newPos;
+            gameObject.name = $"Element_{newPos.X}_{newPos.Y}_{Type}";
+        }
+
+        public void MoveTo(Vector3 targetPosition, float duration, Action onComplete)
+        {
+            _moveTween?.Kill();
+
+            if (duration <= 0f)
+            {
+                transform.position = targetPosition;
+                onComplete?.Invoke();
+                return;
+            }
+
+            _moveTween = transform
+                .DOMove(targetPosition, duration)
+                .SetEase(Ease.OutQuad)
+                .OnComplete(() => onComplete?.Invoke());
+        }
+
         public void Destroy()
         {
+            _moveTween?.Kill();
+
             if (Application.isPlaying)
                 UnityEngine.Object.Destroy(gameObject);
             else
