@@ -244,6 +244,59 @@ namespace Features.Board.Views
             }
         }
 
+        public void SpawnElement(GridPosition pos, ElementType type, int fallDistance, Action onComplete)
+        {
+            var sprite = GetSpriteForType(type);
+            if (sprite == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            var elementGO = new GameObject($"Element_{pos.X}_{pos.Y}");
+            elementGO.transform.SetParent(transform);
+
+            var elementView = elementGO.AddComponent<ElementView>();
+            elementView.Initialize(pos, type, sprite);
+
+            Vector3 targetPos = GridToWorld(pos);
+            Vector3 startPos = targetPos + new Vector3(0, fallDistance * _cellSize, 0);
+            elementView.UpdatePosition(startPos);
+
+            elementView.OnDragStart += HandleElementDragStart;
+            elementView.OnDragEnd += HandleElementDragEnd;
+            elementView.OnClicked += HandleElementClicked;
+
+            _elementViews[pos] = elementView;
+
+            float duration = _config != null ? _config.FallDuration : 0.2f;
+            float totalDuration = duration * Mathf.Max(1f, fallDistance * 0.5f);
+
+            elementView.MoveTo(targetPos, totalDuration, onComplete);
+        }
+
+        public void SpawnElements(List<SpawnData> spawns, Action onComplete)
+        {
+            if (spawns == null || spawns.Count == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            int totalSpawns = spawns.Count;
+            int completedSpawns = 0;
+
+            foreach (var spawn in spawns)
+            {
+                SpawnElement(spawn.Position, spawn.Type, spawn.FallDistance, () =>
+                {
+                    completedSpawns++;
+                    if (completedSpawns >= totalSpawns)
+                        onComplete?.Invoke();
+                });
+            }
+        }
+
         private void HandleElementDragStart(GridPosition pos)
         {
             _dragStartPos = pos;

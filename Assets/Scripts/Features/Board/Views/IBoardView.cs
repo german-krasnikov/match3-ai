@@ -13,31 +13,36 @@ namespace Features.Board.Views
         void RemoveElement(GridPosition pos);
         void Clear();
 
-        /// <summary>
-        /// Swap two elements visually with animation.
-        /// Calls onComplete when both elements finish moving.
-        /// </summary>
         void SwapElements(GridPosition from, GridPosition to, Action onComplete);
-
-        /// <summary>
-        /// Destroy multiple elements with animation.
-        /// Calls onComplete when ALL animations finish.
-        /// </summary>
         void DestroyElements(List<GridPosition> positions, Action onComplete);
-
-        /// <summary>
-        /// Move element from one position to another with fall animation.
-        /// Updates internal tracking after animation completes.
-        /// </summary>
         void MoveElement(GridPosition from, GridPosition to, Action onComplete);
+        void MoveElements(List<FallMove> moves, Action onComplete);
 
         /// <summary>
-        /// Move multiple elements simultaneously (all falls in parallel).
-        /// Calls onComplete when ALL movements finish.
+        /// Spawn element with fall-from-top animation.
         /// </summary>
-        void MoveElements(List<FallMove> moves, Action onComplete);
+        void SpawnElement(GridPosition pos, ElementType type, int fallDistance, Action onComplete);
+
+        /// <summary>
+        /// Spawn multiple elements with fall animation. Calls onComplete when ALL finish.
+        /// </summary>
+        void SpawnElements(List<SpawnData> spawns, Action onComplete);
 
         event Action<GridPosition> OnCellClicked;
         event Action<GridPosition, GridPosition> OnSwapAttempted;
+    }
+
+    public readonly struct SpawnData
+    {
+        public readonly GridPosition Position;
+        public readonly ElementType Type;
+        public readonly int FallDistance;
+
+        public SpawnData(GridPosition position, ElementType type, int fallDistance)
+        {
+            Position = position;
+            Type = type;
+            FallDistance = fallDistance;
+        }
     }
 }

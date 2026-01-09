@@ -15,11 +15,14 @@ namespace Features.Board.Presenters
         private readonly IMatchService _matchService;
         private readonly IInputService _inputService;
         private readonly IFallService _fallService;
+        private readonly ISpawnService _spawnService;
 
         private bool _isProcessing;
 
         public event Action OnMatchesDestroyed;
         public event Action OnFallComplete;
+        public event Action OnRefillComplete;
+        public event Action OnCascadeComplete;
 
         public BoardPresenter(
             BoardModel model,
@@ -27,13 +30,15 @@ namespace Features.Board.Presenters
             float cellSize,
             IMatchService matchService = null,
             IInputService inputService = null,
-            IFallService fallService = null)
+            IFallService fallService = null,
+            ISpawnService spawnService = null)
         {
             _model = model;
             _view = view;
             _matchService = matchService;
             _inputService = inputService;
             _fallService = fallService;
+            _spawnService = spawnService;
 
             _view.Initialize(_model.Width, _model.Height, cellSize);
 
@@ -41,42 +46,22 @@ namespace Features.Board.Presenters
             _model.OnElementRemoved += HandleElementRemoved;
 
             if (_inputService != null)
-            {
                 _inputService.OnSwapRequested += HandleSwapRequested;
-            }
 
-            if (_view is IBoardView viewWithEvents)
-            {
-                viewWithEvents.OnSwapAttempted += HandleSwapAttempted;
-            }
+            _view.OnSwapAttempted += HandleSwapAttempted;
         }
 
-        private void HandleElementAdded(GridPosition pos, ElementType type)
-        {
-            _view.CreateElement(pos, type);
-        }
+        private void HandleElementAdded(GridPosition pos, ElementType type) => _view.CreateElement(pos, type);
+        private void HandleElementRemoved(GridPosition pos) => _view.RemoveElement(pos);
 
-        private void HandleElementRemoved(GridPosition pos)
-        {
-            _view.RemoveElement(pos);
-        }
-
-        private void HandleSwapAttempted(GridPosition from, GridPosition to)
-        {
-            _inputService?.RequestSwap(from, to);
-        }
+        private void HandleSwapAttempted(GridPosition from, GridPosition to) => _inputService?.RequestSwap(from, to);
 
         private void HandleSwapRequested(GridPosition from, GridPosition to)
         {
             if (_isProcessing) return;
-
             TrySwap(from, to);
         }
 
-        /// <summary>
-        /// Attempt to swap elements at two positions.
-        /// If swap creates a match, it persists. Otherwise, elements swap back.
-        /// </summary>
         public void TrySwap(GridPosition from, GridPosition to)
         {
             if (_isProcessing) return;
@@ -90,10 +75,7 @@ namespace Features.Board.Presenters
             _isProcessing = true;
             _inputService?.SetInputEnabled(false);
 
-            // Perform swap in model first
             _model.SwapElements(from, to);
-
-            // Animate the swap
             _view.SwapElements(from, to, () => OnSwapAnimationComplete(from, to));
         }
 
@@ -103,15 +85,11 @@ namespace Features.Board.Presenters
 
             if (!createsMatch)
             {
-                // Rollback: swap back in model
                 _model.SwapElements(from, to);
-
-                // Animate swap back
-                _view.SwapElements(from, to, OnRollbackComplete);
+                _view.SwapElements(from, to, OnProcessingComplete);
             }
             else
             {
-                // Valid swap - process matches
                 ProcessMatches(from, to);
             }
         }
@@ -135,68 +113,45 @@ namespace Features.Board.Presenters
             }
 
             var allMatches = new List<GridPosition>();
-
-            var matchesFrom = _matchService.FindMatchesAt(_model, from);
-            var matchesTo = _matchService.FindMatchesAt(_model, to);
-
-            AddUniquePositions(allMatches, matchesFrom);
-            AddUniquePositions(allMatches, matchesTo);
+            AddUniquePositions(allMatches, _matchService.FindMatchesAt(_model, from));
+            AddUniquePositions(allMatches, _matchService.FindMatchesAt(_model, to));
 
             if (allMatches.Count > 0)
-            {
                 DestroyMatches(allMatches);
-            }
             else
-            {
                 OnProcessingComplete();
-            }
         }
 
         private void AddUniquePositions(List<GridPosition> target, List<GridPosition> source)
         {
             foreach (var pos in source)
-            {
                 if (!target.Contains(pos))
-                {
                     target.Add(pos);
-                }
-            }
         }
 
-        /// <summary>
-        /// Destroy matched elements: animate in view, then remove from model.
-        /// </summary>
         public void DestroyMatches(List<GridPosition> matches)
         {
             if (matches == null || matches.Count == 0)
             {
-                OnProcessingComplete();
+                CheckCascade();
                 return;
             }
 
-            // Animate destruction in view
             _view.DestroyElements(matches, () => OnDestroyAnimationComplete(matches));
         }
 
         private void OnDestroyAnimationComplete(List<GridPosition> destroyedPositions)
         {
-            // Remove from model after animation
             _model.RemoveElements(destroyedPositions);
-
             OnMatchesDestroyed?.Invoke();
-
-            // Process falls after destroy
             ProcessFalls();
         }
 
-        /// <summary>
-        /// Process element falls after matches are destroyed.
-        /// </summary>
         private void ProcessFalls()
         {
             if (_fallService == null)
             {
-                OnProcessingComplete();
+                ProcessRefill();
                 return;
             }
 
@@ -204,32 +159,87 @@ namespace Features.Board.Presenters
 
             if (fallMoves.Count == 0)
             {
-                OnProcessingComplete();
+                ProcessRefill();
                 return;
             }
 
-            // Animate falls in view
             _view.MoveElements(fallMoves, () => OnFallAnimationComplete(fallMoves));
         }
 
         private void OnFallAnimationComplete(List<FallMove> moves)
         {
-            // Apply moves to model after animation
             foreach (var move in moves)
-            {
                 _model.MoveElement(move.From, move.To);
-            }
 
             OnFallComplete?.Invoke();
-
-            // After fall - could check for new matches (cascade) in Step 9
-            // For now, complete processing
-            OnProcessingComplete();
+            ProcessRefill();
         }
 
-        private void OnRollbackComplete()
+        private void ProcessRefill()
         {
-            OnProcessingComplete();
+            if (_fallService == null || _spawnService == null)
+            {
+                CheckCascade();
+                return;
+            }
+
+            var emptyPositions = _fallService.GetEmptyTopPositions(_model);
+
+            if (emptyPositions.Count == 0)
+            {
+                CheckCascade();
+                return;
+            }
+
+            var spawns = new List<SpawnData>();
+            var columnEmptyCounts = new Dictionary<int, int>();
+
+            foreach (var pos in emptyPositions)
+            {
+                if (!columnEmptyCounts.ContainsKey(pos.X))
+                    columnEmptyCounts[pos.X] = 0;
+                columnEmptyCounts[pos.X]++;
+            }
+
+            foreach (var pos in emptyPositions)
+            {
+                var type = _spawnService.GetRandomElement();
+                int fallDistance = columnEmptyCounts[pos.X];
+                spawns.Add(new SpawnData(pos, type, fallDistance));
+            }
+
+            _view.SpawnElements(spawns, () => OnSpawnAnimationComplete(spawns));
+        }
+
+        private void OnSpawnAnimationComplete(List<SpawnData> spawns)
+        {
+            foreach (var spawn in spawns)
+                _model.SetElement(spawn.Position, new Element(spawn.Type));
+
+            OnRefillComplete?.Invoke();
+            CheckCascade();
+        }
+
+        private void CheckCascade()
+        {
+            if (_matchService == null)
+            {
+                OnCascadeComplete?.Invoke();
+                OnProcessingComplete();
+                return;
+            }
+
+            var matches = _matchService.FindAllMatches(_model);
+
+            if (matches.Count > 0)
+            {
+                DestroyMatches(matches);
+            }
+            else
+            {
+                OnCascadeComplete?.Invoke();
+                OnProcessingComplete();
+            }
         }
 
         private void OnProcessingComplete()
@@ -249,9 +259,7 @@ namespace Features.Board.Presenters
                     var pos = new GridPosition(x, y);
                     var element = _model.GetElement(pos);
                     if (element != null)
-                    {
                         _view.CreateElement(pos, element.Type);
-                    }
                 }
             }
         }
@@ -264,14 +272,9 @@ namespace Features.Board.Presenters
             _model.OnElementRemoved -= HandleElementRemoved;
 
             if (_inputService != null)
-            {
                 _inputService.OnSwapRequested -= HandleSwapRequested;
-            }
 
-            if (_view is IBoardView viewWithEvents)
-            {
-                viewWithEvents.OnSwapAttempted -= HandleSwapAttempted;
-            }
+            _view.OnSwapAttempted -= HandleSwapAttempted;
         }
     }
 }
