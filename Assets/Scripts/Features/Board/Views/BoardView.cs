@@ -124,6 +124,43 @@ namespace Features.Board.Views
             viewTo.MoveTo(targetTo, duration, OnMoveComplete);
         }
 
+        public void DestroyElements(List<GridPosition> positions, Action onComplete)
+        {
+            if (positions == null || positions.Count == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            float duration = _config != null ? _config.DestroyDuration : 0.2f;
+            int totalToDestroy = 0;
+            int destroyedCount = 0;
+
+            foreach (var pos in positions)
+                if (_elementViews.ContainsKey(pos)) totalToDestroy++;
+
+            if (totalToDestroy == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            foreach (var pos in positions)
+            {
+                if (_elementViews.TryGetValue(pos, out var view))
+                {
+                    var capturedPos = pos;
+                    view.PlayDestroyAnimation(duration, () =>
+                    {
+                        _elementViews.Remove(capturedPos);
+                        destroyedCount++;
+                        if (destroyedCount >= totalToDestroy)
+                            onComplete?.Invoke();
+                    });
+                }
+            }
+        }
+
         private void HandleElementDragStart(GridPosition pos)
         {
             _dragStartPos = pos;

@@ -17,6 +17,12 @@ namespace Features.Board.Views
         /// </summary>
         void SwapElements(GridPosition from, GridPosition to, Action onComplete);
 
+        /// <summary>
+        /// Destroy multiple elements with animation.
+        /// Calls onComplete when ALL animations finish.
+        /// </summary>
+        void DestroyElements(System.Collections.Generic.List<GridPosition> positions, Action onComplete);
+
         event Action<GridPosition> OnCellClicked;
         event Action<GridPosition, GridPosition> OnSwapAttempted;
     }

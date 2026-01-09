@@ -1,4 +1,5 @@
 // Assets/Tests/EditMode/Features/Board/BoardModelTests.cs
+using System.Collections.Generic;
 using NUnit.Framework;
 using Common;
 using Features.Board.Models;
@@ -145,6 +146,59 @@ namespace Features.Board.Models
             Assert.IsFalse(_board.IsValidPosition(new GridPosition(0, -1)));
             Assert.IsFalse(_board.IsValidPosition(new GridPosition(Width, 0)));
             Assert.IsFalse(_board.IsValidPosition(new GridPosition(0, Height)));
+        }
+
+        // === RemoveElements Batch Tests ===
+
+        [Test]
+        public void RemoveElements_RemovesMultipleElements()
+        {
+            var positions = new List<GridPosition>
+            {
+                new GridPosition(0, 0),
+                new GridPosition(1, 0),
+                new GridPosition(2, 0)
+            };
+            foreach (var pos in positions)
+                _board.SetElement(pos, new Element(ElementType.Red));
+
+            _board.RemoveElements(positions);
+
+            foreach (var pos in positions)
+                Assert.IsNull(_board.GetElement(pos));
+        }
+
+        [Test]
+        public void RemoveElements_FiresOnElementRemovedForEach()
+        {
+            var positions = new List<GridPosition>
+            {
+                new GridPosition(0, 0),
+                new GridPosition(1, 0)
+            };
+            foreach (var pos in positions)
+                _board.SetElement(pos, new Element(ElementType.Red));
+
+            var removedPositions = new List<GridPosition>();
+            _board.OnElementRemoved += pos => removedPositions.Add(pos);
+
+            _board.RemoveElements(positions);
+
+            Assert.AreEqual(2, removedPositions.Count);
+        }
+
+        [Test]
+        public void RemoveElements_WithNullList_DoesNothing()
+        {
+            _board.RemoveElements(null);
+            Assert.Pass();
+        }
+
+        [Test]
+        public void RemoveElements_WithEmptyList_DoesNothing()
+        {
+            _board.RemoveElements(new List<GridPosition>());
+            Assert.Pass();
         }
     }
 }

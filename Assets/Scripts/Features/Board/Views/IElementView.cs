@@ -26,6 +26,11 @@ namespace Features.Board.Views
         /// </summary>
         void SetGridPosition(GridPosition newPos);
 
+        /// <summary>
+        /// Play destroy animation (scale + fade) then destroy.
+        /// </summary>
+        void PlayDestroyAnimation(float duration, Action onComplete);
+
         event Action<GridPosition> OnClicked;
         event Action<GridPosition> OnDragStart;
         event Action<GridPosition> OnDragEnd;

@@ -153,7 +153,7 @@ namespace Features.Board.Presenters
 
             _presenter.TrySwap(posA, posB);
 
-            Assert.IsTrue(_presenter.IsSwapping);
+            Assert.IsTrue(_presenter.IsProcessing);
         }
 
         [Test]
@@ -290,7 +290,7 @@ namespace Features.Board.Presenters
         }
 
         [Test]
-        public void AfterValidSwap_ReEnablesInput()
+        public void AfterValidSwap_WithMatches_ReEnablesInputAfterDestroy()
         {
             var posA = new GridPosition(0, 0);
             var posB = new GridPosition(1, 0);
@@ -301,12 +301,15 @@ namespace Features.Board.Presenters
                 .Returns(new List<GridPosition> { posA });
 
             Action swapCallback = null;
+            Action destroyCallback = null;
             _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
 
             _presenter.TrySwap(posA, posB);
             _inputService.ClearReceivedCalls();
 
             swapCallback?.Invoke();
+            destroyCallback?.Invoke();
 
             _inputService.Received(1).SetInputEnabled(true);
         }
@@ -379,6 +382,147 @@ namespace Features.Board.Presenters
 
             // Should only be called once (no rollback)
             _view.Received(1).SwapElements(Arg.Any<GridPosition>(), Arg.Any<GridPosition>(), Arg.Any<Action>());
+        }
+
+        // === Destroy Tests ===
+
+        [Test]
+        public void DestroyMatches_CallsViewDestroyElements()
+        {
+            var matches = new List<GridPosition>
+            {
+                new GridPosition(0, 0),
+                new GridPosition(1, 0),
+                new GridPosition(2, 0)
+            };
+
+            _presenter.DestroyMatches(matches);
+
+            _view.Received(1).DestroyElements(
+                Arg.Is<List<GridPosition>>(list => list.Count == 3),
+                Arg.Any<Action>());
+        }
+
+        [Test]
+        public void DestroyMatches_AfterAnimation_RemovesFromModel()
+        {
+            var pos = new GridPosition(0, 0);
+            _model.SetElement(pos, new Element(ElementType.Red));
+
+            Action destroyCallback = null;
+            _view.DestroyElements(
+                Arg.Any<List<GridPosition>>(),
+                Arg.Do<Action>(cb => destroyCallback = cb));
+
+            _presenter.DestroyMatches(new List<GridPosition> { pos });
+            destroyCallback?.Invoke();
+
+            Assert.IsNull(_model.GetElement(pos));
+        }
+
+        [Test]
+        public void DestroyMatches_WithEmptyList_CompletesImmediately()
+        {
+            _presenter.DestroyMatches(new List<GridPosition>());
+
+            _view.DidNotReceive().DestroyElements(
+                Arg.Any<List<GridPosition>>(),
+                Arg.Any<Action>());
+        }
+
+        [Test]
+        public void DestroyMatches_FiresOnMatchesDestroyedEvent()
+        {
+            var pos = new GridPosition(0, 0);
+            _model.SetElement(pos, new Element(ElementType.Red));
+
+            bool eventFired = false;
+            _presenter.OnMatchesDestroyed += () => eventFired = true;
+
+            Action destroyCallback = null;
+            _view.DestroyElements(
+                Arg.Any<List<GridPosition>>(),
+                Arg.Do<Action>(cb => destroyCallback = cb));
+
+            _presenter.DestroyMatches(new List<GridPosition> { pos });
+            destroyCallback?.Invoke();
+
+            Assert.IsTrue(eventFired);
+        }
+
+        [Test]
+        public void TrySwap_WhenMatchCreated_CallsDestroyElements()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA, new GridPosition(0, 1), new GridPosition(0, 2) });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            Action swapCallback = null;
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            swapCallback?.Invoke();
+
+            _view.Received(1).DestroyElements(
+                Arg.Is<List<GridPosition>>(list => list.Count == 3),
+                Arg.Any<Action>());
+        }
+
+        [Test]
+        public void TrySwap_WhenNoMatch_DoesNotCallDestroyElements()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, Arg.Any<GridPosition>())
+                .Returns(new List<GridPosition>());
+
+            Action swapCallback = null;
+            _view.SwapElements(Arg.Any<GridPosition>(), Arg.Any<GridPosition>(),
+                Arg.Do<Action>(cb => swapCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            swapCallback?.Invoke();
+
+            _view.DidNotReceive().DestroyElements(
+                Arg.Any<List<GridPosition>>(),
+                Arg.Any<Action>());
+        }
+
+        [Test]
+        public void AfterDestroyComplete_ReEnablesInput()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            Action swapCallback = null;
+            Action destroyCallback = null;
+
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            _inputService.ClearReceivedCalls();
+
+            swapCallback?.Invoke();
+            destroyCallback?.Invoke();
+
+            _inputService.Received(1).SetInputEnabled(true);
         }
     }
 }

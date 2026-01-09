@@ -14,6 +14,7 @@ namespace Features.Board.Views
         private BoxCollider2D _collider;
         private Camera _mainCamera;
         private Tween _moveTween;
+        private Tween _destroyTween;
 
         private bool _isDragging;
         private Vector3 _dragStartWorldPos;
@@ -36,6 +37,7 @@ namespace Features.Board.Views
         private void OnDestroy()
         {
             _moveTween?.Kill();
+            _destroyTween?.Kill();
         }
 
         public void Initialize(GridPosition pos, ElementType type, Sprite sprite)
@@ -92,9 +94,33 @@ namespace Features.Board.Views
                 .OnComplete(() => onComplete?.Invoke());
         }
 
+        public void PlayDestroyAnimation(float duration, Action onComplete)
+        {
+            _destroyTween?.Kill();
+            _moveTween?.Kill();
+
+            if (duration <= 0f)
+            {
+                onComplete?.Invoke();
+                Destroy();
+                return;
+            }
+
+            var sequence = DOTween.Sequence();
+            sequence.Append(transform.DOScale(Vector3.zero, duration).SetEase(Ease.InQuad));
+            sequence.Join(_spriteRenderer.DOFade(0f, duration).SetEase(Ease.InQuad));
+            sequence.OnComplete(() =>
+            {
+                onComplete?.Invoke();
+                Destroy();
+            });
+            _destroyTween = sequence;
+        }
+
         public void Destroy()
         {
             _moveTween?.Kill();
+            _destroyTween?.Kill();
 
             if (Application.isPlaying)
                 UnityEngine.Object.Destroy(gameObject);

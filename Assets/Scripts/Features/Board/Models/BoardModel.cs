@@ -67,6 +67,12 @@ namespace Features.Board.Models
             OnElementRemoved?.Invoke(pos);
         }
 
+        public void RemoveElements(System.Collections.Generic.List<GridPosition> positions)
+        {
+            if (positions == null) return;
+            foreach (var pos in positions) RemoveElement(pos);
+        }
+
         public void SwapElements(GridPosition a, GridPosition b)
         {
             var cellA = GetCell(a);

@@ -1,5 +1,6 @@
 // Assets/Scripts/Features/Board/Presenters/BoardPresenter.cs
 using System;
+using System.Collections.Generic;
 using Common;
 using Features.Board.Models;
 using Features.Board.Views;
@@ -14,7 +15,9 @@ namespace Features.Board.Presenters
         private readonly IMatchService _matchService;
         private readonly IInputService _inputService;
 
-        private bool _isSwapping;
+        private bool _isProcessing;
+
+        public event Action OnMatchesDestroyed;
 
         public BoardPresenter(
             BoardModel model,
@@ -61,18 +64,13 @@ namespace Features.Board.Presenters
 
         private void HandleSwapRequested(GridPosition from, GridPosition to)
         {
-            if (_isSwapping) return;
-
+            if (_isProcessing) return;
             TrySwap(from, to);
         }
 
-        /// <summary>
-        /// Attempt to swap elements at two positions.
-        /// If swap creates a match, it persists. Otherwise, elements swap back.
-        /// </summary>
         public void TrySwap(GridPosition from, GridPosition to)
         {
-            if (_isSwapping) return;
+            if (_isProcessing) return;
 
             var elementFrom = _model.GetElement(from);
             var elementTo = _model.GetElement(to);
@@ -80,56 +78,64 @@ namespace Features.Board.Presenters
             if (elementFrom == null || elementTo == null)
                 return;
 
-            _isSwapping = true;
+            _isProcessing = true;
             _inputService?.SetInputEnabled(false);
 
-            // Perform swap in model first
             _model.SwapElements(from, to);
-
-            // Animate the swap
             _view.SwapElements(from, to, () => OnSwapAnimationComplete(from, to));
         }
 
         private void OnSwapAnimationComplete(GridPosition from, GridPosition to)
         {
-            bool createsMatch = CheckForMatches(from, to);
+            var (hasMatch, allMatches) = FindMatches(from, to);
 
-            if (!createsMatch)
+            if (!hasMatch)
             {
-                // Rollback: swap back in model
                 _model.SwapElements(from, to);
-
-                // Animate swap back
-                _view.SwapElements(from, to, OnRollbackComplete);
+                _view.SwapElements(from, to, OnProcessingComplete);
             }
             else
             {
-                // Valid swap - matches will be processed by GameplayCoordinator (Step 7+)
-                OnSwapSuccess();
+                DestroyMatches(allMatches);
             }
         }
 
-        private bool CheckForMatches(GridPosition from, GridPosition to)
+        private (bool hasMatch, List<GridPosition> matches) FindMatches(GridPosition from, GridPosition to)
         {
-            if (_matchService == null) return true;
+            if (_matchService == null) return (true, new List<GridPosition>());
 
             var matchesFrom = _matchService.FindMatchesAt(_model, from);
             var matchesTo = _matchService.FindMatchesAt(_model, to);
 
-            return matchesFrom.Count > 0 || matchesTo.Count > 0;
+            var allMatches = new List<GridPosition>();
+            foreach (var pos in matchesFrom)
+                if (!allMatches.Contains(pos)) allMatches.Add(pos);
+            foreach (var pos in matchesTo)
+                if (!allMatches.Contains(pos)) allMatches.Add(pos);
+
+            return (allMatches.Count > 0, allMatches);
         }
 
-        private void OnRollbackComplete()
+        public void DestroyMatches(List<GridPosition> matches)
         {
-            _isSwapping = false;
-            _inputService?.SetInputEnabled(true);
+            if (matches == null || matches.Count == 0)
+            {
+                OnProcessingComplete();
+                return;
+            }
+
+            _view.DestroyElements(matches, () =>
+            {
+                _model.RemoveElements(matches);
+                OnMatchesDestroyed?.Invoke();
+                OnProcessingComplete();
+            });
         }
 
-        private void OnSwapSuccess()
+        private void OnProcessingComplete()
         {
-            _isSwapping = false;
+            _isProcessing = false;
             _inputService?.SetInputEnabled(true);
-            // GameplayCoordinator will handle match detection in Step 7+
         }
 
         public void SyncViewWithModel()
@@ -150,7 +156,7 @@ namespace Features.Board.Presenters
             }
         }
 
-        public bool IsSwapping => _isSwapping;
+        public bool IsProcessing => _isProcessing;
 
         public void Dispose()
         {
