@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Common;
 using Configs;
+using Features.Board.Services;
 using UnityEngine;
 
 namespace Features.Board.Views
@@ -158,6 +159,88 @@ namespace Features.Board.Views
                             onComplete?.Invoke();
                     });
                 }
+            }
+        }
+
+        public void MoveElement(GridPosition from, GridPosition to, Action onComplete)
+        {
+            if (!_elementViews.TryGetValue(from, out var view))
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            float duration = _config != null ? _config.FallDuration : 0.2f;
+            Vector3 targetPosition = GridToWorld(to);
+
+            view.MoveTo(targetPosition, duration, () =>
+            {
+                _elementViews.Remove(from);
+                view.SetGridPosition(to);
+                _elementViews[to] = view;
+
+                onComplete?.Invoke();
+            });
+        }
+
+        public void MoveElements(List<FallMove> moves, Action onComplete)
+        {
+            if (moves == null || moves.Count == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            float duration = _config != null ? _config.FallDuration : 0.2f;
+            int totalMoves = 0;
+            int completedMoves = 0;
+
+            foreach (var move in moves)
+            {
+                if (_elementViews.ContainsKey(move.From))
+                {
+                    totalMoves++;
+                }
+            }
+
+            if (totalMoves == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            var viewsToMove = new List<(ElementView view, FallMove move)>();
+            foreach (var move in moves)
+            {
+                if (_elementViews.TryGetValue(move.From, out var view))
+                {
+                    viewsToMove.Add((view, move));
+                }
+            }
+
+            foreach (var (view, move) in viewsToMove)
+            {
+                _elementViews.Remove(move.From);
+            }
+
+            void OnMoveComplete(ElementView view, FallMove move)
+            {
+                view.SetGridPosition(move.To);
+                _elementViews[move.To] = view;
+
+                completedMoves++;
+                if (completedMoves >= totalMoves)
+                {
+                    onComplete?.Invoke();
+                }
+            }
+
+            foreach (var (view, move) in viewsToMove)
+            {
+                Vector3 targetPosition = GridToWorld(move.To);
+                var capturedView = view;
+                var capturedMove = move;
+                view.MoveTo(targetPosition, duration, () => OnMoveComplete(capturedView, capturedMove));
             }
         }
 

@@ -200,5 +200,87 @@ namespace Features.Board.Models
             _board.RemoveElements(new List<GridPosition>());
             Assert.Pass();
         }
+
+        // === MoveElement Tests ===
+
+        [Test]
+        public void MoveElement_ValidMove_MovesElement()
+        {
+            var from = new GridPosition(0, 1);
+            var to = new GridPosition(0, 0);
+            _board.SetElement(from, new Element(ElementType.Red));
+
+            _board.MoveElement(from, to);
+
+            Assert.IsNull(_board.GetElement(from));
+            Assert.AreEqual(ElementType.Red, _board.GetElement(to).Type);
+        }
+
+        [Test]
+        public void MoveElement_RaisesOnElementMoved()
+        {
+            var from = new GridPosition(0, 1);
+            var to = new GridPosition(0, 0);
+            _board.SetElement(from, new Element(ElementType.Red));
+
+            GridPosition receivedFrom = GridPosition.Invalid;
+            GridPosition receivedTo = GridPosition.Invalid;
+            _board.OnElementMoved += (f, t) =>
+            {
+                receivedFrom = f;
+                receivedTo = t;
+            };
+
+            _board.MoveElement(from, to);
+
+            Assert.AreEqual(from, receivedFrom);
+            Assert.AreEqual(to, receivedTo);
+        }
+
+        [Test]
+        public void MoveElement_FromEmpty_DoesNothing()
+        {
+            var from = new GridPosition(0, 1);
+            var to = new GridPosition(0, 0);
+
+            bool eventRaised = false;
+            _board.OnElementMoved += (f, t) => eventRaised = true;
+
+            _board.MoveElement(from, to);
+
+            Assert.IsFalse(eventRaised);
+        }
+
+        [Test]
+        public void MoveElement_ToOccupied_DoesNothing()
+        {
+            var from = new GridPosition(0, 1);
+            var to = new GridPosition(0, 0);
+            _board.SetElement(from, new Element(ElementType.Red));
+            _board.SetElement(to, new Element(ElementType.Blue));
+
+            bool eventRaised = false;
+            _board.OnElementMoved += (f, t) => eventRaised = true;
+
+            _board.MoveElement(from, to);
+
+            Assert.IsFalse(eventRaised);
+            Assert.AreEqual(ElementType.Red, _board.GetElement(from).Type);
+            Assert.AreEqual(ElementType.Blue, _board.GetElement(to).Type);
+        }
+
+        [Test]
+        public void MoveElement_InvalidPositions_DoesNothing()
+        {
+            var from = new GridPosition(-1, 0);
+            var to = new GridPosition(0, 0);
+
+            bool eventRaised = false;
+            _board.OnElementMoved += (f, t) => eventRaised = true;
+
+            _board.MoveElement(from, to);
+
+            Assert.IsFalse(eventRaised);
+        }
     }
 }

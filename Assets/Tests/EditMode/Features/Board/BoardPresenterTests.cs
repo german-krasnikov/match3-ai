@@ -18,6 +18,7 @@ namespace Features.Board.Presenters
         private IBoardView _view;
         private IMatchService _matchService;
         private IInputService _inputService;
+        private IFallService _fallService;
         private BoardPresenter _presenter;
 
         private const int Width = 8;
@@ -31,13 +32,18 @@ namespace Features.Board.Presenters
             _view = Substitute.For<IBoardView>();
             _matchService = Substitute.For<IMatchService>();
             _inputService = Substitute.For<IInputService>();
+            _fallService = Substitute.For<IFallService>();
+
+            // Default: no falls
+            _fallService.CalculateFalls(_model).Returns(new List<FallMove>());
 
             _presenter = new BoardPresenter(
                 _model,
                 _view,
                 CellSize,
                 _matchService,
-                _inputService);
+                _inputService,
+                _fallService);
         }
 
         [TearDown]
@@ -367,7 +373,7 @@ namespace Features.Board.Presenters
         {
             // Create presenter without match service
             _presenter.Dispose();
-            _presenter = new BoardPresenter(_model, _view, CellSize, null, _inputService);
+            _presenter = new BoardPresenter(_model, _view, CellSize, null, _inputService, null);
 
             var posA = new GridPosition(0, 0);
             var posB = new GridPosition(1, 0);
@@ -523,6 +529,202 @@ namespace Features.Board.Presenters
             destroyCallback?.Invoke();
 
             _inputService.Received(1).SetInputEnabled(true);
+        }
+
+        // === Fall Tests ===
+
+        [Test]
+        public void AfterDestroy_CallsFallServiceCalculateFalls()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            Action swapCallback = null;
+            Action destroyCallback = null;
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            swapCallback?.Invoke();
+            destroyCallback?.Invoke();
+
+            _fallService.Received(1).CalculateFalls(_model);
+        }
+
+        [Test]
+        public void WhenFallsExist_CallsViewMoveElements()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            var fallMoves = new List<FallMove>
+            {
+                new FallMove(new GridPosition(0, 2), new GridPosition(0, 0))
+            };
+            _fallService.CalculateFalls(_model).Returns(fallMoves);
+
+            Action swapCallback = null;
+            Action destroyCallback = null;
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            swapCallback?.Invoke();
+            destroyCallback?.Invoke();
+
+            _view.Received(1).MoveElements(
+                Arg.Is<List<FallMove>>(list => list.Count == 1),
+                Arg.Any<Action>());
+        }
+
+        [Test]
+        public void WhenNoFalls_DoesNotCallViewMoveElements()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            _fallService.CalculateFalls(_model).Returns(new List<FallMove>());
+
+            Action swapCallback = null;
+            Action destroyCallback = null;
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            swapCallback?.Invoke();
+            destroyCallback?.Invoke();
+
+            _view.DidNotReceive().MoveElements(
+                Arg.Any<List<FallMove>>(),
+                Arg.Any<Action>());
+        }
+
+        [Test]
+        public void AfterFallComplete_FiresOnFallCompleteEvent()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            var fallMoves = new List<FallMove>
+            {
+                new FallMove(new GridPosition(0, 2), new GridPosition(0, 0))
+            };
+            _fallService.CalculateFalls(_model).Returns(fallMoves);
+
+            bool eventFired = false;
+            _presenter.OnFallComplete += () => eventFired = true;
+
+            Action swapCallback = null;
+            Action destroyCallback = null;
+            Action fallCallback = null;
+
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
+            _view.MoveElements(Arg.Any<List<FallMove>>(), Arg.Do<Action>(cb => fallCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            swapCallback?.Invoke();
+            destroyCallback?.Invoke();
+            fallCallback?.Invoke();
+
+            Assert.IsTrue(eventFired);
+        }
+
+        [Test]
+        public void AfterFallComplete_ReEnablesInput()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            var fallMoves = new List<FallMove>
+            {
+                new FallMove(new GridPosition(0, 2), new GridPosition(0, 0))
+            };
+            _fallService.CalculateFalls(_model).Returns(fallMoves);
+
+            Action swapCallback = null;
+            Action destroyCallback = null;
+            Action fallCallback = null;
+
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
+            _view.MoveElements(Arg.Any<List<FallMove>>(), Arg.Do<Action>(cb => fallCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            _inputService.ClearReceivedCalls();
+
+            swapCallback?.Invoke();
+            destroyCallback?.Invoke();
+            fallCallback?.Invoke();
+
+            _inputService.Received(1).SetInputEnabled(true);
+        }
+
+        [Test]
+        public void IsProcessing_TrueDuringFall()
+        {
+            var posA = new GridPosition(0, 0);
+            var posB = new GridPosition(1, 0);
+            _model.SetElement(posA, new Element(ElementType.Red));
+            _model.SetElement(posB, new Element(ElementType.Blue));
+
+            _matchService.FindMatchesAt(_model, posA)
+                .Returns(new List<GridPosition> { posA });
+            _matchService.FindMatchesAt(_model, posB)
+                .Returns(new List<GridPosition>());
+
+            var fallMoves = new List<FallMove>
+            {
+                new FallMove(new GridPosition(0, 2), new GridPosition(0, 0))
+            };
+            _fallService.CalculateFalls(_model).Returns(fallMoves);
+
+            Action swapCallback = null;
+            Action destroyCallback = null;
+
+            _view.SwapElements(posA, posB, Arg.Do<Action>(cb => swapCallback = cb));
+            _view.DestroyElements(Arg.Any<List<GridPosition>>(), Arg.Do<Action>(cb => destroyCallback = cb));
+
+            _presenter.TrySwap(posA, posB);
+            swapCallback?.Invoke();
+            destroyCallback?.Invoke();
+
+            Assert.IsTrue(_presenter.IsProcessing);
         }
     }
 }

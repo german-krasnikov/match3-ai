@@ -14,22 +14,26 @@ namespace Features.Board.Presenters
         private readonly IBoardView _view;
         private readonly IMatchService _matchService;
         private readonly IInputService _inputService;
+        private readonly IFallService _fallService;
 
         private bool _isProcessing;
 
         public event Action OnMatchesDestroyed;
+        public event Action OnFallComplete;
 
         public BoardPresenter(
             BoardModel model,
             IBoardView view,
             float cellSize,
             IMatchService matchService = null,
-            IInputService inputService = null)
+            IInputService inputService = null,
+            IFallService fallService = null)
         {
             _model = model;
             _view = view;
             _matchService = matchService;
             _inputService = inputService;
+            _fallService = fallService;
 
             _view.Initialize(_model.Width, _model.Height, cellSize);
 
@@ -65,9 +69,14 @@ namespace Features.Board.Presenters
         private void HandleSwapRequested(GridPosition from, GridPosition to)
         {
             if (_isProcessing) return;
+
             TrySwap(from, to);
         }
 
+        /// <summary>
+        /// Attempt to swap elements at two positions.
+        /// If swap creates a match, it persists. Otherwise, elements swap back.
+        /// </summary>
         public void TrySwap(GridPosition from, GridPosition to)
         {
             if (_isProcessing) return;
@@ -81,41 +90,82 @@ namespace Features.Board.Presenters
             _isProcessing = true;
             _inputService?.SetInputEnabled(false);
 
+            // Perform swap in model first
             _model.SwapElements(from, to);
+
+            // Animate the swap
             _view.SwapElements(from, to, () => OnSwapAnimationComplete(from, to));
         }
 
         private void OnSwapAnimationComplete(GridPosition from, GridPosition to)
         {
-            var (hasMatch, allMatches) = FindMatches(from, to);
+            bool createsMatch = CheckForMatches(from, to);
 
-            if (!hasMatch)
+            if (!createsMatch)
             {
+                // Rollback: swap back in model
                 _model.SwapElements(from, to);
-                _view.SwapElements(from, to, OnProcessingComplete);
+
+                // Animate swap back
+                _view.SwapElements(from, to, OnRollbackComplete);
             }
             else
             {
-                DestroyMatches(allMatches);
+                // Valid swap - process matches
+                ProcessMatches(from, to);
             }
         }
 
-        private (bool hasMatch, List<GridPosition> matches) FindMatches(GridPosition from, GridPosition to)
+        private bool CheckForMatches(GridPosition from, GridPosition to)
         {
-            if (_matchService == null) return (true, new List<GridPosition>());
+            if (_matchService == null) return true;
 
             var matchesFrom = _matchService.FindMatchesAt(_model, from);
             var matchesTo = _matchService.FindMatchesAt(_model, to);
 
-            var allMatches = new List<GridPosition>();
-            foreach (var pos in matchesFrom)
-                if (!allMatches.Contains(pos)) allMatches.Add(pos);
-            foreach (var pos in matchesTo)
-                if (!allMatches.Contains(pos)) allMatches.Add(pos);
-
-            return (allMatches.Count > 0, allMatches);
+            return matchesFrom.Count > 0 || matchesTo.Count > 0;
         }
 
+        private void ProcessMatches(GridPosition from, GridPosition to)
+        {
+            if (_matchService == null)
+            {
+                OnProcessingComplete();
+                return;
+            }
+
+            var allMatches = new List<GridPosition>();
+
+            var matchesFrom = _matchService.FindMatchesAt(_model, from);
+            var matchesTo = _matchService.FindMatchesAt(_model, to);
+
+            AddUniquePositions(allMatches, matchesFrom);
+            AddUniquePositions(allMatches, matchesTo);
+
+            if (allMatches.Count > 0)
+            {
+                DestroyMatches(allMatches);
+            }
+            else
+            {
+                OnProcessingComplete();
+            }
+        }
+
+        private void AddUniquePositions(List<GridPosition> target, List<GridPosition> source)
+        {
+            foreach (var pos in source)
+            {
+                if (!target.Contains(pos))
+                {
+                    target.Add(pos);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Destroy matched elements: animate in view, then remove from model.
+        /// </summary>
         public void DestroyMatches(List<GridPosition> matches)
         {
             if (matches == null || matches.Count == 0)
@@ -124,12 +174,62 @@ namespace Features.Board.Presenters
                 return;
             }
 
-            _view.DestroyElements(matches, () =>
+            // Animate destruction in view
+            _view.DestroyElements(matches, () => OnDestroyAnimationComplete(matches));
+        }
+
+        private void OnDestroyAnimationComplete(List<GridPosition> destroyedPositions)
+        {
+            // Remove from model after animation
+            _model.RemoveElements(destroyedPositions);
+
+            OnMatchesDestroyed?.Invoke();
+
+            // Process falls after destroy
+            ProcessFalls();
+        }
+
+        /// <summary>
+        /// Process element falls after matches are destroyed.
+        /// </summary>
+        private void ProcessFalls()
+        {
+            if (_fallService == null)
             {
-                _model.RemoveElements(matches);
-                OnMatchesDestroyed?.Invoke();
                 OnProcessingComplete();
-            });
+                return;
+            }
+
+            var fallMoves = _fallService.CalculateFalls(_model);
+
+            if (fallMoves.Count == 0)
+            {
+                OnProcessingComplete();
+                return;
+            }
+
+            // Animate falls in view
+            _view.MoveElements(fallMoves, () => OnFallAnimationComplete(fallMoves));
+        }
+
+        private void OnFallAnimationComplete(List<FallMove> moves)
+        {
+            // Apply moves to model after animation
+            foreach (var move in moves)
+            {
+                _model.MoveElement(move.From, move.To);
+            }
+
+            OnFallComplete?.Invoke();
+
+            // After fall - could check for new matches (cascade) in Step 9
+            // For now, complete processing
+            OnProcessingComplete();
+        }
+
+        private void OnRollbackComplete()
+        {
+            OnProcessingComplete();
         }
 
         private void OnProcessingComplete()

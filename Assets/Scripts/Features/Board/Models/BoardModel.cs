@@ -1,5 +1,6 @@
 // Assets/Scripts/Features/Board/Models/BoardModel.cs
 using System;
+using System.Collections.Generic;
 using Common;
 
 namespace Features.Board.Models
@@ -14,6 +15,7 @@ namespace Features.Board.Models
         public event Action<GridPosition, ElementType> OnElementAdded;
         public event Action<GridPosition> OnElementRemoved;
         public event Action<GridPosition, GridPosition> OnElementsSwapped;
+        public event Action<GridPosition, GridPosition> OnElementMoved;
 
         public BoardModel(int width, int height)
         {
@@ -67,10 +69,18 @@ namespace Features.Board.Models
             OnElementRemoved?.Invoke(pos);
         }
 
-        public void RemoveElements(System.Collections.Generic.List<GridPosition> positions)
+        /// <summary>
+        /// Remove multiple elements at once.
+        /// Fires OnElementRemoved for each valid position.
+        /// </summary>
+        public void RemoveElements(List<GridPosition> positions)
         {
             if (positions == null) return;
-            foreach (var pos in positions) RemoveElement(pos);
+
+            foreach (var pos in positions)
+            {
+                RemoveElement(pos);
+            }
         }
 
         public void SwapElements(GridPosition a, GridPosition b)
@@ -86,6 +96,40 @@ namespace Features.Board.Models
             cellB.SetElement(elementA);
 
             OnElementsSwapped?.Invoke(a, b);
+        }
+
+        /// <summary>
+        /// Move element from one position to another (for falling).
+        /// Source becomes empty, target receives the element.
+        /// Does nothing if source is empty or target is occupied.
+        /// </summary>
+        public void MoveElement(GridPosition from, GridPosition to)
+        {
+            var cellFrom = GetCell(from);
+            var cellTo = GetCell(to);
+
+            if (cellFrom == null || cellTo == null) return;
+            if (cellFrom.IsEmpty) return;
+            if (!cellTo.IsEmpty) return;
+
+            var element = cellFrom.RemoveElement();
+            cellTo.SetElement(element);
+
+            OnElementMoved?.Invoke(from, to);
+        }
+
+        /// <summary>
+        /// Apply multiple moves at once (for batch falling).
+        /// Moves are applied in order - be careful about dependencies.
+        /// </summary>
+        public void ApplyMoves(List<(GridPosition from, GridPosition to)> moves)
+        {
+            if (moves == null) return;
+
+            foreach (var (from, to) in moves)
+            {
+                MoveElement(from, to);
+            }
         }
     }
 }
